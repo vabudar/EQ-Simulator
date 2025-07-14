@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocal Sculptor - Pro Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #111827;
+            --panel-color: #1f2937;
+            --grid-color: #374151;
+            --text-color: #d1d5db;
+            --text-muted-color: #9ca3af;
+            --accent-color: #a78bfa;
+
+            --lf-color: #4ade80; /* green-400 */
+            --lm-color: #c084fc; /* purple-400 */
+            --hm-color: #60a5fa; /* blue-400 */
+            --hf-color: #f87171; /* red-400 */
+            --curve-color: #facc15; /* yellow-400 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .control-knob {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #4a5568;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+            border-radius: 5px;
+        }
+        .control-knob:hover {
+            opacity: 1;
+        }
+        .control-knob::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #e5e7eb;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #374151;
+        }
+        .control-knob::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #e5e7eb;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #374151;
+        }
+        #eq-canvas {
+            cursor: grab;
+        }
+        #eq-canvas:active {
+            cursor: grabbing;
+        }
+        .control-panel {
+            background-color: var(--panel-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            border: 1px solid var(--grid-color);
+        }
+        #play-icon-overlay {
+            transition: opacity 0.2s ease-in-out;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="start-screen" class="text-center">
+        <h1 class="text-4xl font-bold mb-4">Vocal Sculptor</h1>
+        <p class="mb-8 text-gray-400">Click below to start the audio engine and begin.</p>
+        <button id="start-button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+            Start
+        </button>
+    </div>
+
+    <div id="main-app" class="hidden w-full max-w-7xl mx-auto bg-black rounded-2xl shadow-2xl p-2 sm:p-4">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 border-b border-gray-700 pb-4 gap-4 px-4">
+            <h1 class="text-2xl sm:text-3xl font-bold text-white">Parametric EQ</h1>
+            <div class="flex items-center justify-center flex-wrap gap-2">
+                <span id="file-name" class="text-sm text-gray-400 truncate max-w-xs" title="Default Clip">Default Clip</span>
+                <input type="file" id="media-upload" class="hidden" accept="audio/*,video/*">
+                <label for="media-upload" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition-colors">Load Media</label>
+                <button id="play-pause-button" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg w-24 flex items-center justify-center">
+                    <svg id="spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="play-pause-text">Play</span>
+                </button>
+                <button id="bypass-button" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Bypass</button>
+                 <button id="reset-button" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Reset</button>
+            </div>
+        </div>
+
+        <!-- Media and EQ Graph -->
+        <div class="bg-gray-900 rounded-lg p-2 mb-6 relative">
+             <div id="video-container" class="relative mb-4 bg-black cursor-pointer">
+                <video id="media-player" loop preload="auto" src="https://storage.googleapis.com/gemini-web-app-assets/vocal-sculptor/spoken-word-clip.mp3" crossOrigin="anonymous" class="w-full max-h-96" playsinline></video>
+                <div id="play-icon-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none bg-black bg-opacity-20">
+                    <svg class="w-16 h-16 text-white opacity-75" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+                    </svg>
+                </div>
+            </div>
+             <div class="flex items-center gap-2 px-2 mb-2">
+                <span id="current-time" class="font-mono text-sm">00:00</span>
+                <input type="range" id="time-slider" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" value="0" step="0.1">
+                <span id="duration" class="font-mono text-sm">00:00</span>
+            </div>
+            <canvas id="eq-canvas" class="w-full h-64 md:h-80"></canvas>
+        </div>
+
+        <!-- EQ Controls -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- LF Band -->
+            <div class="control-panel">
+                <h2 class="text-xl font-bold text-center mb-4" style="color: var(--lf-color);">LF</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="freq-lf" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-lf-val" class="font-mono">80 Hz</span></label>
+                        <input id="freq-lf" type="range" min="30" max="20000" value="80" step="1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="gain-lf" class="flex justify-between text-sm"><span>Gain</span><span id="gain-lf-val" class="font-mono">0.0 dB</span></label>
+                        <input id="gain-lf" type="range" min="-12" max="12" value="0" step="0.1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="q-lf" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-lf-val" class="font-mono">1.00</span></label>
+                        <input id="q-lf" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
+                    </div>
+                </div>
+            </div>
+
+            <!-- LM Band -->
+            <div class="control-panel">
+                 <h2 class="text-xl font-bold text-center mb-4" style="color: var(--lm-color);">LM</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="freq-lm" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-lm-val" class="font-mono">400 Hz</span></label>
+                        <input id="freq-lm" type="range" min="30" max="20000" value="400" step="1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="gain-lm" class="flex justify-between text-sm"><span>Gain</span><span id="gain-lm-val" class="font-mono">0.0 dB</span></label>
+                        <input id="gain-lm" type="range" min="-12" max="12" value="0" step="0.1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="q-lm" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-lm-val" class="font-mono">1.00</span></label>
+                        <input id="q-lm" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
+                    </div>
+                </div>
+            </div>
+
+            <!-- HM Band -->
+            <div class="control-panel">
+                <h2 class="text-xl font-bold text-center mb-4" style="color: var(--hm-color);">HM</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="freq-hm" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-hm-val" class="font-mono">2500 Hz</span></label>
+                        <input id="freq-hm" type="range" min="30" max="20000" value="2500" step="1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="gain-hm" class="flex justify-between text-sm"><span>Gain</span><span id="gain-hm-val" class="font-mono">0.0 dB</span></label>
+                        <input id="gain-hm" type="range" min="-12" max="12" value="0" step="0.1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="q-hm" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-hm-val" class="font-mono">1.00</span></label>
+                        <input id="q-hm" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
+                    </div>
+                </div>
+            </div>
+
+            <!-- HF Band -->
+            <div class="control-panel">
+                <h2 class="text-xl font-bold text-center mb-4" style="color: var(--hf-color);">HF</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="freq-hf" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-hf-val" class="font-mono">10000 Hz</span></label>
+                        <input id="freq-hf" type="range" min="30" max="20000" value="10000" step="1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="gain-hf" class="flex justify-between text-sm"><span>Gain</span><span id="gain-hf-val" class="font-mono">0.0 dB</span></label>
+                        <input id="gain-hf" type="range" min="-12" max="12" value="0" step="0.1" class="control-knob">
+                    </div>
+                    <div>
+                        <label for="q-hf" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-hf-val" class="font-mono">1.00</span></label>
+                        <input id="q-hf" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('start-screen');
+        const mainApp = document.getElementById('main-app');
+        const startButton = document.getElementById('start-button');
+        const playPauseButton = document.getElementById('play-pause-button');
+        const bypassButton = document.getElementById('bypass-button');
+        const resetButton = document.getElementById('reset-button');
+        const mediaPlayer = document.getElementById('media-player');
+        const canvas = document.getElementById('eq-canvas');
+        const ctx = canvas.getContext('2d');
+        const mediaUploadInput = document.getElementById('media-upload');
+        const fileNameDisplay = document.getElementById('file-name');
+        const videoContainer = document.getElementById('video-container');
+        const playIconOverlay = document.getElementById('play-icon-overlay');
+        const timeSlider = document.getElementById('time-slider');
+        const currentTimeDisplay = document.getElementById('current-time');
+        const durationDisplay = document.getElementById('duration');
+        const spinner = document.getElementById('spinner');
+        const playPauseText = document.getElementById('play-pause-text');
+
+        // --- Web Audio API Setup ---
+        let audioContext;
+        let sourceNode;
+        let filters = {};
+        let processedGainNode;
+        let bypassGainNode;
+        let isPlaying = false;
+        let isBypassed = false;
+        let isInitialized = false;
+
+        // --- Interaction State ---
+        let selectedBand = null;
+        let isDragging = false;
+
+        const bands = {
+            lf: { type: 'peaking', color: 'var(--lf-color)', colorRgba: 'rgba(74, 222, 128, 0.3)' },
+            lm: { type: 'peaking', color: 'var(--lm-color)', colorRgba: 'rgba(192, 132, 252, 0.3)' },
+            hm: { type: 'peaking', color: 'var(--hm-color)', colorRgba: 'rgba(96, 165, 250, 0.3)' },
+            hf: { type: 'peaking', color: 'var(--hf-color)', colorRgba: 'rgba(248, 113, 113, 0.3)' }
+        };
+
+        const initialDefaults = {
+            lf: { freq: 80, gain: 0, q: 1 },
+            lm: { freq: 400, gain: 0, q: 1 },
+            hm: { freq: 2500, gain: 0, q: 1 },
+            hf: { freq: 10000, gain: 0, q: 1 }
+        };
+
+        // --- Initialization ---
+        startButton.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            setTimeout(() => {
+                if (!isInitialized) {
+                    initAudio();
+                }
+            }, 0);
+        });
+
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            enablePlaybackControls(false);
+            
+            sourceNode = audioContext.createMediaElementSource(mediaPlayer);
+            processedGainNode = audioContext.createGain();
+            bypassGainNode = audioContext.createGain();
+
+            let lastNode = sourceNode;
+            Object.keys(bands).forEach(bandId => {
+                const filter = audioContext.createBiquadFilter();
+                filter.type = bands[bandId].type;
+                filters[bandId] = filter;
+                lastNode.connect(filter);
+                lastNode = filter;
+            });
+            lastNode.connect(processedGainNode);
+            processedGainNode.connect(audioContext.destination);
+            
+            sourceNode.connect(bypassGainNode);
+            bypassGainNode.connect(audioContext.destination);
+
+            processedGainNode.gain.value = 1;
+            bypassGainNode.gain.value = 0;
+            
+            setControlsToDefaults();
+            
+            setupControls();
+            setupFileUpload();
+            setupCanvasInteraction();
+            setupMediaControls();
+            
+            resizeCanvas();
+            drawEQCurve();
+            isInitialized = true;
+        }
+
+        function enablePlaybackControls(enabled) {
+            playPauseButton.disabled = !enabled;
+            playPauseButton.classList.toggle('opacity-50', !enabled);
+            playPauseButton.classList.toggle('cursor-not-allowed', !enabled);
+            
+            if (enabled) {
+                spinner.classList.add('hidden');
+                playPauseText.classList.remove('hidden');
+                playPauseText.textContent = isPlaying ? 'Pause' : 'Play';
+            } else {
+                spinner.classList.remove('hidden');
+                playPauseText.classList.add('hidden');
+            }
+        }
+
+        function setupControls() {
+            Object.keys(bands).forEach(bandId => {
+                const gainSlider = document.getElementById(`gain-${bandId}`);
+                const qSlider = document.getElementById(`q-${bandId}`);
+                
+                document.getElementById(`freq-${bandId}`).addEventListener('input', () => updateFilter(bandId));
+                if (gainSlider) {
+                    gainSlider.addEventListener('input', () => updateFilter(bandId));
+                    gainSlider.addEventListener('dblclick', () => {
+                        gainSlider.value = 0;
+                        updateFilter(bandId);
+                    });
+                }
+                if (qSlider) {
+                    qSlider.addEventListener('input', () => updateFilter(bandId));
+                    qSlider.addEventListener('dblclick', () => {
+                        qSlider.value = 1;
+                        updateFilter(bandId);
+                    });
+                }
+            });
+        }
+
+        function setupFileUpload() {
+            mediaUploadInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                if (isPlaying) playPauseButton.click();
+                mediaPlayer.src = URL.createObjectURL(file);
+                mediaPlayer.load();
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.title = file.name;
+                enablePlaybackControls(false);
+            });
+        }
+        
+        function setControlsToDefaults() {
+            Object.keys(bands).forEach(bandId => {
+                const d = initialDefaults[bandId];
+                document.getElementById(`freq-${bandId}`).value = d.freq;
+                document.getElementById(`gain-${bandId}`).value = d.gain;
+                if (d.q) document.getElementById(`q-${bandId}`).value = d.q;
+            });
+            updateAllFilters();
+        }
+
+        function setupMediaControls() {
+            videoContainer.addEventListener('click', () => playPauseButton.click());
+            mediaPlayer.addEventListener('play', () => {
+                playIconOverlay.classList.add('hidden');
+                playPauseText.textContent = 'Pause';
+            });
+            mediaPlayer.addEventListener('pause', () => {
+                playIconOverlay.classList.remove('hidden');
+                playPauseText.textContent = 'Play';
+            });
+            mediaPlayer.addEventListener('canplay', () => enablePlaybackControls(true));
+            
+            mediaPlayer.addEventListener('loadedmetadata', () => {
+                timeSlider.max = mediaPlayer.duration;
+                durationDisplay.textContent = formatTime(mediaPlayer.duration);
+            });
+
+            mediaPlayer.addEventListener('timeupdate', () => {
+                timeSlider.value = mediaPlayer.currentTime;
+                currentTimeDisplay.textContent = formatTime(mediaPlayer.currentTime);
+            });
+
+            timeSlider.addEventListener('input', () => {
+                mediaPlayer.currentTime = timeSlider.value;
+            });
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateFilter(bandId) {
+            if (!filters[bandId]) return;
+            const filter = filters[bandId];
+            const freq = parseFloat(document.getElementById(`freq-${bandId}`).value);
+            const gain = parseFloat(document.getElementById(`gain-${bandId}`).value);
+            
+            filter.frequency.value = freq;
+            filter.gain.value = gain;
+            
+            document.getElementById(`freq-${bandId}-val`).textContent = `${Math.round(freq)} Hz`;
+            document.getElementById(`gain-${bandId}-val`).textContent = `${gain.toFixed(1)} dB`;
+
+            if (bands[bandId].type === 'peaking') {
+                const q = parseFloat(document.getElementById(`q-${bandId}`).value);
+                filter.Q.value = q;
+                document.getElementById(`q-${bandId}-val`).textContent = q.toFixed(2);
+            }
+        }
+
+        function updateAllFilters() {
+            Object.keys(bands).forEach(updateFilter);
+        }
+
+        playPauseButton.addEventListener('click', async () => {
+            if (!isInitialized || playPauseButton.disabled) return;
+            if (audioContext.state === 'suspended') await audioContext.resume();
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                await mediaPlayer.play();
+                playPauseButton.classList.replace('bg-green-600', 'bg-yellow-500');
+                playPauseButton.classList.replace('hover:bg-green-500', 'hover:bg-yellow-400');
+            } else {
+                mediaPlayer.pause();
+                playPauseButton.classList.replace('bg-yellow-500', 'bg-green-600');
+                playPauseButton.classList.replace('hover:bg-yellow-400', 'hover:bg-green-500');
+            }
+        });
+
+        bypassButton.addEventListener('click', () => {
+            isBypassed = !isBypassed;
+            
+            if (isBypassed) {
+                processedGainNode.gain.value = 0;
+                bypassGainNode.gain.value = 1;
+            } else {
+                processedGainNode.gain.value = 1;
+                bypassGainNode.gain.value = 0;
+            }
+
+            bypassButton.textContent = isBypassed ? 'Engaged' : 'Bypass';
+            bypassButton.classList.toggle('bg-red-600');
+            bypassButton.classList.toggle('hover:bg-red-500');
+            bypassButton.classList.toggle('bg-gray-600');
+            bypassButton.classList.toggle('hover:bg-gray-500');
+        });
+        
+        resetButton.addEventListener('click', setControlsToDefaults);
+
+        function setupCanvasInteraction() {
+            canvas.addEventListener('mousedown', e => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                let closestBand = null;
+                let minDistance = Infinity;
+
+                for (const bandId of Object.keys(bands)) {
+                    const pointX = freqToX(filters[bandId].frequency.value, canvas.clientWidth);
+                    const pointY = gainToY(filters[bandId].gain.value, canvas.clientHeight);
+                    const distance = Math.sqrt(Math.pow(x - pointX, 2) + Math.pow(y - pointY, 2));
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestBand = bandId;
+                    }
+                }
+
+                if (minDistance < 25) { // Increased grab radius
+                    selectedBand = closestBand;
+                    isDragging = true;
+                }
+            });
+
+            canvas.addEventListener('mousemove', e => {
+                if (!isDragging || !selectedBand) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const freqSlider = document.getElementById(`freq-${selectedBand}`);
+                const gainSlider = document.getElementById(`gain-${selectedBand}`);
+
+                const newFreq = xToFreq(x, canvas.clientWidth);
+                const newGain = yToGain(y, canvas.clientHeight);
+
+                freqSlider.value = Math.max(freqSlider.min, Math.min(freqSlider.max, newFreq));
+                gainSlider.value = Math.max(gainSlider.min, Math.min(gainSlider.max, newGain));
+                
+                updateFilter(selectedBand);
+            });
+
+            const endDrag = () => {
+                isDragging = false;
+                selectedBand = null;
+            }
+            canvas.addEventListener('mouseup', endDrag);
+            canvas.addEventListener('mouseleave', endDrag);
+
+            canvas.addEventListener('wheel', e => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                let hoveredBand = null;
+                for (const bandId of Object.keys(bands)) {
+                    const pointX = freqToX(filters[bandId].frequency.value, canvas.clientWidth);
+                    const pointY = gainToY(filters[bandId].gain.value, canvas.clientHeight);
+                    const distance = Math.sqrt(Math.pow(x - pointX, 2) + Math.pow(y - pointY, 2));
+                    if (distance < 15) {
+                        hoveredBand = bandId;
+                        break;
+                    }
+                }
+
+                if (hoveredBand) {
+                    const qSlider = document.getElementById(`q-${hoveredBand}`);
+                    const step = parseFloat(qSlider.step);
+                    let currentVal = parseFloat(qSlider.value);
+                    currentVal -= Math.sign(e.deltaY) * step * 5;
+                    qSlider.value = Math.max(qSlider.min, Math.min(qSlider.max, currentVal));
+                    updateFilter(hoveredBand);
+                }
+            });
+        }
+
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+
+        function drawEQCurve() {
+            requestAnimationFrame(drawEQCurve);
+            if (!isInitialized) return;
+            
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const center_y = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(0, 0, width, height);
+            drawGrid(width, height);
+
+            const frequencies = new Float32Array(width);
+            for (let i = 0; i < width; i++) {
+                frequencies[i] = xToFreq(i, width);
+            }
+
+            const magResponse = new Float32Array(width);
+            const phaseResponse = new Float32Array(width);
+            
+            if (!isBypassed) {
+                Object.keys(bands).forEach(bandId => {
+                    const filter = filters[bandId];
+                    const bandInfo = bands[bandId];
+                    
+                    filter.getFrequencyResponse(frequencies, magResponse, phaseResponse);
+
+                    ctx.beginPath();
+                    ctx.fillStyle = bandInfo.colorRgba;
+
+                    ctx.moveTo(0, center_y);
+                    for (let i = 0; i < width; i++) {
+                        const db = 20 * Math.log10(magResponse[i]);
+                        const y = gainToY(db, height);
+                        ctx.lineTo(i, y);
+                    }
+                    ctx.lineTo(width, center_y);
+                    ctx.closePath();
+                    ctx.fill();
+                });
+            }
+
+            const combinedResponse = new Float32Array(width).fill(1);
+            Object.values(filters).forEach(filter => {
+                filter.getFrequencyResponse(frequencies, magResponse, phaseResponse);
+                for (let i = 0; i < width; i++) combinedResponse[i] *= magResponse[i];
+            });
+
+            ctx.beginPath();
+            const curveColor = getComputedStyle(document.documentElement).getPropertyValue('--curve-color').trim();
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
+            ctx.strokeStyle = isBypassed ? gridColor : curveColor;
+            ctx.lineWidth = 2.5;
+            for (let i = 0; i < width; i++) {
+                if (combinedResponse[i] > 0) {
+                    const db = 20 * Math.log10(combinedResponse[i]);
+                    const y = gainToY(db, height);
+                    if (i === 0) ctx.moveTo(i, y);
+                    else ctx.lineTo(i, y);
+                }
+            }
+            ctx.stroke();
+            drawControlPoints(width, height);
+        }
+
+        function drawGrid(width, height) {
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
+            const textColorMuted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted-color').trim();
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            
+            const freqLines = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
+            ctx.font = '10px Inter';
+            ctx.fillStyle = textColorMuted;
+            freqLines.forEach(freq => {
+                const x = freqToX(freq, width);
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+                ctx.fillText(`${freq < 1000 ? freq : (freq/1000)+'k'}`, x + 4, height - 10);
+            });
+
+            const gainLines = [-12, -6, 0, 6, 12];
+            gainLines.forEach(gain => {
+                const y = gainToY(gain, height);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+                if (gain !== 0) {
+                    ctx.fillText(`${gain}dB`, 5, y - 5);
+                }
+            });
+
+            ctx.font = '12px Inter';
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+            ctx.fillText('Frequency (Hz)', width / 2, height - 2);
+        }
+        
+        function drawControlPoints(width, height) {
+            const bandIds = Object.keys(bands);
+            const controlFrequencies = new Float32Array(bandIds.length);
+            bandIds.forEach((bandId, i) => controlFrequencies[i] = filters[bandId].frequency.value);
+        
+            const magResponse = new Float32Array(bandIds.length);
+            const phaseResponse = new Float32Array(bandIds.length);
+        
+            const combinedMagResponse = new Float32Array(bandIds.length).fill(1);
+            Object.values(filters).forEach(filter => {
+                filter.getFrequencyResponse(controlFrequencies, magResponse, phaseResponse);
+                for (let i = 0; i < magResponse.length; i++) combinedMagResponse[i] *= magResponse[i];
+            });
+        
+            bandIds.forEach((bandId, index) => {
+                const x = freqToX(controlFrequencies[index], width);
+                const db = 20 * Math.log10(combinedMagResponse[index]);
+                const y = gainToY(db, height);
+        
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, 2 * Math.PI);
+                const bandColor = getComputedStyle(document.documentElement).getPropertyValue(bands[bandId].color.substring(4, bands[bandId].color.length-1)).trim();
+                const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
+                ctx.fillStyle = isBypassed ? gridColor : bandColor;
+                ctx.fill();
+                ctx.strokeStyle = isBypassed ? '#4b5563' : '#e5e7eb';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        function freqToX(freq, width) {
+            const minFreq = 20, maxFreq = 22000;
+            return width * (Math.log(freq) - Math.log(minFreq)) / (Math.log(maxFreq) - Math.log(minFreq));
+        }
+
+        function xToFreq(x, width) {
+            const minFreq = 20, maxFreq = 22000;
+            const logMin = Math.log(minFreq);
+            const logMax = Math.log(maxFreq);
+            const logFreq = logMin + (x / width) * (logMax - logMin);
+            return Math.exp(logFreq);
+        }
+
+        function gainToY(gain, height) {
+            const totalDbRange = 36; // +/- 18dB
+            return height * (0.5 - gain / totalDbRange);
+        }
+
+        function yToGain(y, height) {
+            const totalDbRange = 36;
+            return (0.5 - y / height) * totalDbRange;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>
