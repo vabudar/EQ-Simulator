@@ -142,7 +142,7 @@
                 <div class="space-y-4">
                     <div>
                         <label for="freq-lf" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-lf-val" class="font-mono">80 Hz</span></label>
-                        <input id="freq-lf" type="range" min="30" max="20000" value="80" step="1" class="control-knob">
+                        <input id="freq-lf" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
                         <label for="gain-lf" class="flex justify-between text-sm"><span>Gain</span><span id="gain-lf-val" class="font-mono">0.0 dB</span></label>
@@ -161,7 +161,7 @@
                 <div class="space-y-4">
                     <div>
                         <label for="freq-lm" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-lm-val" class="font-mono">400 Hz</span></label>
-                        <input id="freq-lm" type="range" min="30" max="20000" value="400" step="1" class="control-knob">
+                        <input id="freq-lm" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
                         <label for="gain-lm" class="flex justify-between text-sm"><span>Gain</span><span id="gain-lm-val" class="font-mono">0.0 dB</span></label>
@@ -180,7 +180,7 @@
                 <div class="space-y-4">
                     <div>
                         <label for="freq-hm" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-hm-val" class="font-mono">2500 Hz</span></label>
-                        <input id="freq-hm" type="range" min="30" max="20000" value="2500" step="1" class="control-knob">
+                        <input id="freq-hm" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
                         <label for="gain-hm" class="flex justify-between text-sm"><span>Gain</span><span id="gain-hm-val" class="font-mono">0.0 dB</span></label>
@@ -199,7 +199,7 @@
                 <div class="space-y-4">
                     <div>
                         <label for="freq-hf" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-hf-val" class="font-mono">10000 Hz</span></label>
-                        <input id="freq-hf" type="range" min="30" max="20000" value="10000" step="1" class="control-knob">
+                        <input id="freq-hf" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
                         <label for="gain-hf" class="flex justify-between text-sm"><span>Gain</span><span id="gain-hf-val" class="font-mono">0.0 dB</span></label>
@@ -262,6 +262,13 @@
             hm: { freq: 2500, gain: 0, q: 1 },
             hf: { freq: 10000, gain: 0, q: 1 }
         };
+
+        // --- Logarithmic Scale Constants ---
+        const MIN_FREQ = 20;
+        const MAX_FREQ = 20000;
+        const MIN_LOG_FREQ = Math.log(MIN_FREQ);
+        const MAX_LOG_FREQ = Math.log(MAX_FREQ);
+        const LOG_RANGE = MAX_LOG_FREQ - MIN_LOG_FREQ;
 
         // --- Initialization ---
         startButton.addEventListener('click', () => {
@@ -326,26 +333,34 @@
             }
         }
 
+        // --- Conversion functions for logarithmic slider ---
+        function freqToSlider(freq) {
+            return 1000 * (Math.log(freq) - MIN_LOG_FREQ) / LOG_RANGE;
+        }
+
+        function sliderToFreq(sliderVal) {
+            const logFreq = MIN_LOG_FREQ + (sliderVal / 1000) * LOG_RANGE;
+            return Math.exp(logFreq);
+        }
+
         function setupControls() {
             Object.keys(bands).forEach(bandId => {
+                const freqSlider = document.getElementById(`freq-${bandId}`);
                 const gainSlider = document.getElementById(`gain-${bandId}`);
                 const qSlider = document.getElementById(`q-${bandId}`);
                 
-                document.getElementById(`freq-${bandId}`).addEventListener('input', () => updateFilter(bandId));
-                if (gainSlider) {
-                    gainSlider.addEventListener('input', () => updateFilter(bandId));
-                    gainSlider.addEventListener('dblclick', () => {
-                        gainSlider.value = 0;
-                        updateFilter(bandId);
-                    });
-                }
-                if (qSlider) {
-                    qSlider.addEventListener('input', () => updateFilter(bandId));
-                    qSlider.addEventListener('dblclick', () => {
-                        qSlider.value = 1;
-                        updateFilter(bandId);
-                    });
-                }
+                freqSlider.addEventListener('input', () => updateFilterFromSlider(bandId));
+                gainSlider.addEventListener('input', () => updateFilter(bandId));
+                qSlider.addEventListener('input', () => updateFilter(bandId));
+
+                gainSlider.addEventListener('dblclick', () => {
+                    gainSlider.value = 0;
+                    updateFilter(bandId);
+                });
+                qSlider.addEventListener('dblclick', () => {
+                    qSlider.value = 1;
+                    updateFilter(bandId);
+                });
             });
         }
 
@@ -365,7 +380,7 @@
         function setControlsToDefaults() {
             Object.keys(bands).forEach(bandId => {
                 const d = initialDefaults[bandId];
-                document.getElementById(`freq-${bandId}`).value = d.freq;
+                document.getElementById(`freq-${bandId}`).value = freqToSlider(d.freq);
                 document.getElementById(`gain-${bandId}`).value = d.gain;
                 if (d.q) document.getElementById(`q-${bandId}`).value = d.q;
             });
@@ -405,27 +420,31 @@
             return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        function updateFilter(bandId) {
+        function updateFilter(bandId, freq) {
             if (!filters[bandId]) return;
             const filter = filters[bandId];
-            const freq = parseFloat(document.getElementById(`freq-${bandId}`).value);
             const gain = parseFloat(document.getElementById(`gain-${bandId}`).value);
-            
-            filter.frequency.value = freq;
-            filter.gain.value = gain;
-            
-            document.getElementById(`freq-${bandId}-val`).textContent = `${Math.round(freq)} Hz`;
-            document.getElementById(`gain-${bandId}-val`).textContent = `${gain.toFixed(1)} dB`;
+            const q = parseFloat(document.getElementById(`q-${bandId}`).value);
 
-            if (bands[bandId].type === 'peaking') {
-                const q = parseFloat(document.getElementById(`q-${bandId}`).value);
-                filter.Q.value = q;
-                document.getElementById(`q-${bandId}-val`).textContent = q.toFixed(2);
-            }
+            const frequency = freq !== undefined ? freq : sliderToFreq(parseFloat(document.getElementById(`freq-${bandId}`).value));
+            
+            filter.frequency.value = frequency;
+            filter.gain.value = gain;
+            filter.Q.value = q;
+            
+            document.getElementById(`freq-${bandId}-val`).textContent = `${Math.round(frequency)} Hz`;
+            document.getElementById(`gain-${bandId}-val`).textContent = `${gain.toFixed(1)} dB`;
+            document.getElementById(`q-${bandId}-val`).textContent = q.toFixed(2);
+        }
+        
+        function updateFilterFromSlider(bandId) {
+            const sliderVal = parseFloat(document.getElementById(`freq-${bandId}`).value);
+            const freq = sliderToFreq(sliderVal);
+            updateFilter(bandId, freq);
         }
 
         function updateAllFilters() {
-            Object.keys(bands).forEach(updateFilter);
+            Object.keys(bands).forEach(bandId => updateFilterFromSlider(bandId));
         }
 
         playPauseButton.addEventListener('click', async () => {
@@ -483,7 +502,7 @@
                     }
                 }
 
-                if (minDistance < 25) { // Increased grab radius
+                if (minDistance < 25) {
                     selectedBand = closestBand;
                     isDragging = true;
                 }
@@ -501,10 +520,10 @@
                 const newFreq = xToFreq(x, canvas.clientWidth);
                 const newGain = yToGain(y, canvas.clientHeight);
 
-                freqSlider.value = Math.max(freqSlider.min, Math.min(freqSlider.max, newFreq));
-                gainSlider.value = Math.max(gainSlider.min, Math.min(gainSlider.max, newGain));
+                freqSlider.value = freqToSlider(Math.max(MIN_FREQ, Math.min(MAX_FREQ, newFreq)));
+                gainSlider.value = Math.max(-12, Math.min(12, newGain));
                 
-                updateFilter(selectedBand);
+                updateFilter(selectedBand, newFreq);
             });
 
             const endDrag = () => {
