@@ -264,7 +264,7 @@
         };
 
         // --- Logarithmic Scale Constants ---
-        const MIN_FREQ = 10;
+        const MIN_FREQ = 20;
         const MAX_FREQ = 20000;
         const MIN_LOG_FREQ = Math.log(MIN_FREQ);
         const MAX_LOG_FREQ = Math.log(MAX_FREQ);
@@ -663,7 +663,7 @@
                 ctx.lineTo(width, y);
                 ctx.stroke();
                 if (gain !== 0) {
-                    ctx.fillText(`${gain}dB`, 5, y - 5);
+                    ctx.fillText(`${gain}dB`, 13, y - 5);
                 }
             });
 
