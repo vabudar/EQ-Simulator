@@ -115,7 +115,8 @@
                     <span id="play-pause-text" class="relative z-10">Play</span>
                 </button>
                 <button id="bypass-button" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Bypass</button>
-                 <button id="reset-button" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Reset</button>
+                <button id="rta-button" class="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">RTA</button>
+                <button id="reset-button" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Reset</button>
             </div>
         </div>
 
@@ -225,6 +226,7 @@
         const playPauseButton = document.getElementById('play-pause-button');
         const bypassButton = document.getElementById('bypass-button');
         const resetButton = document.getElementById('reset-button');
+        const rtaButton = document.getElementById('rta-button');
         const mediaPlayer = document.getElementById('media-player');
         const canvas = document.getElementById('eq-canvas');
         const ctx = canvas.getContext('2d');
@@ -245,14 +247,18 @@
         let filters = {};
         let processedGainNode;
         let bypassGainNode;
+        let analyserNode;
+        let rtaDataArray;
         let isPlaying = false;
         let isBypassed = false;
         let isInitialized = false;
+        let isRtaOn = false;
 
         // --- Interaction State ---
         let selectedBand = null;
         let hoveredBand = null;
         let isDragging = false;
+        let lastTap = { time: 0, bandId: null };
 
         const bands = {
             lf: { type: 'peaking', color: 'var(--lf-color)', colorRgba: 'rgba(74, 222, 128, 0.3)' },
@@ -269,7 +275,7 @@
         };
         
         const challenges = [
-             { name: "Robotic Edward", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Edward%20Sounding%20Robotic.mp4" },
+            { name: "Robotic Edward", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Edward%20Sounding%20Robotic.mp4" },
              { name: "Clean Audio", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4" },
              { name: "Inconsistent Audio", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Inconsistent%20Sound%20Across%20Sections%20-%20Made%20with%20Clipchamp.mp4" },
         ];
@@ -280,6 +286,8 @@
         const MIN_LOG_FREQ = Math.log(MIN_FREQ);
         const MAX_LOG_FREQ = Math.log(MAX_FREQ);
         const LOG_RANGE = MAX_LOG_FREQ - MIN_LOG_FREQ;
+
+        const GAIN_RANGE = 12;
 
         // --- Initialization ---
         startButton.addEventListener('click', () => {
@@ -299,6 +307,9 @@
             sourceNode = audioContext.createMediaElementSource(mediaPlayer);
             processedGainNode = audioContext.createGain();
             bypassGainNode = audioContext.createGain();
+            analyserNode = audioContext.createAnalyser();
+            analyserNode.fftSize = 2048;
+            rtaDataArray = new Uint8Array(analyserNode.frequencyBinCount);
 
             let lastNode = sourceNode;
             Object.keys(bands).forEach(bandId => {
@@ -309,7 +320,8 @@
                 lastNode = filter;
             });
             lastNode.connect(processedGainNode);
-            processedGainNode.connect(audioContext.destination);
+            processedGainNode.connect(analyserNode);
+            analyserNode.connect(audioContext.destination);
             
             sourceNode.connect(bypassGainNode);
             bypassGainNode.connect(audioContext.destination);
@@ -365,7 +377,7 @@
             });
         }
 
-        // --- Conversion functions for logarithmic slider ---
+        // --- Conversion functions for logarithmic sliders ---
         function freqToSlider(freq) {
             if (freq <= 0) return 0;
             return 1000 * (Math.log(freq) - MIN_LOG_FREQ) / LOG_RANGE;
@@ -419,13 +431,7 @@
         }
         
         function setControlsToDefaults() {
-            Object.keys(bands).forEach(bandId => {
-                const d = initialDefaults[bandId];
-                document.getElementById(`freq-${bandId}`).value = freqToSlider(d.freq);
-                document.getElementById(`gain-${bandId}`).value = d.gain;
-                if (d.q) document.getElementById(`q-${bandId}`).value = d.q;
-            });
-            updateAllFilters();
+            applyEqPreset(initialDefaults);
         }
 
         function setupMediaControls() {
@@ -533,14 +539,30 @@
         
         resetButton.addEventListener('click', setControlsToDefaults);
 
+        rtaButton.addEventListener('click', () => {
+            isRtaOn = !isRtaOn;
+            rtaButton.classList.toggle('bg-teal-600');
+            rtaButton.classList.toggle('bg-opacity-50');
+        });
+
+        function applyEqPreset(settings) {
+             Object.keys(settings).forEach(bandId => {
+                const s = settings[bandId];
+                document.getElementById(`freq-${bandId}`).value = freqToSlider(s.freq);
+                document.getElementById(`gain-${bandId}`).value = s.gain;
+                if (s.q) document.getElementById(`q-${bandId}`).value = s.q;
+            });
+            updateAllFilters();
+        }
+
         function setupCanvasInteraction() {
             const getClosestBand = (x, y) => {
                 let closestBand = null;
                 let minDistance = Infinity;
 
                 for (const bandId of Object.keys(bands)) {
-                    const pointX = freqToX(filters[bandId].frequency.value, canvas.clientWidth);
-                    const pointY = gainToY(filters[bandId].gain.value, canvas.clientHeight);
+                    const pointX = freqToX(sliderToFreq(document.getElementById(`freq-${bandId}`).value), canvas.clientWidth);
+                    const pointY = gainToY(parseFloat(document.getElementById(`gain-${bandId}`).value), canvas.clientHeight);
                     const distance = Math.sqrt(Math.pow(x - pointX, 2) + Math.pow(y - pointY, 2));
                     
                     if (distance < minDistance) {
@@ -552,8 +574,24 @@
             };
 
             const handleDown = (x, y) => {
-                selectedBand = getClosestBand(x, y);
-                if (selectedBand) {
+                const band = getClosestBand(x, y);
+                
+                const now = Date.now();
+                if (band && band === lastTap.bandId && (now - lastTap.time) < 300) {
+                    const d = initialDefaults[band];
+                    document.getElementById(`gain-${band}`).value = d.gain;
+                    updateFilterFromSlider(band);
+
+                    lastTap = { time: 0, bandId: null };
+                    isDragging = false;
+                    selectedBand = null;
+                    return;
+                }
+                
+                lastTap = { time: now, bandId: band };
+
+                if (band) {
+                    selectedBand = band;
                     isDragging = true;
                 }
             };
@@ -570,7 +608,7 @@
                 const newGain = yToGain(y, canvas.clientHeight);
 
                 freqSlider.value = freqToSlider(Math.max(MIN_FREQ, Math.min(MAX_FREQ, newFreq)));
-                gainSlider.value = Math.max(-12, Math.min(12, newGain));
+                gainSlider.value = Math.max(-GAIN_RANGE, Math.min(GAIN_RANGE, newGain));
                 
                 updateFilterFromSlider(selectedBand);
             };
@@ -579,6 +617,17 @@
                 isDragging = false;
                 selectedBand = null;
             };
+            
+            canvas.addEventListener('dblclick', e => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const bandToReset = getClosestBand(x, y);
+                if (bandToReset) {
+                    document.getElementById(`gain-${bandToReset}`).value = 0;
+                    updateFilterFromSlider(bandToReset);
+                }
+            });
 
             canvas.addEventListener('mousedown', e => {
                 const rect = canvas.getBoundingClientRect();
@@ -606,31 +655,40 @@
 
             canvas.addEventListener('touchmove', e => {
                 e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                handleMove(touch.clientX - rect.left, touch.clientY - rect.top);
-            });
+                if (e.touches.length === 2 && selectedBand) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const currentDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
 
-            canvas.addEventListener('touchend', handleUp);
-            canvas.addEventListener('touchcancel', handleUp);
+                    if (initialPinchDistance === null) {
+                        initialPinchDistance = currentDistance;
+                        const qSlider = document.getElementById(`q-${selectedBand}`);
+                        initialQ = parseFloat(qSlider.value);
+                    }
+                    
+                    const scale = currentDistance / initialPinchDistance;
+                    const qSlider = document.getElementById(`q-${selectedBand}`);
+                    const newQ = Math.max(parseFloat(qSlider.min), Math.min(parseFloat(qSlider.max), initialQ / scale));
+                    qSlider.value = newQ;
+                    updateFilterFromSlider(selectedBand);
 
-            canvas.addEventListener('wheel', e => {
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                let wheelHoveredBand = getClosestBand(x, y);
-
-                if (wheelHoveredBand) {
-                    const qSlider = document.getElementById(`q-${wheelHoveredBand}`);
-                    const step = parseFloat(qSlider.step);
-                    let currentVal = parseFloat(qSlider.value);
-                    currentVal -= Math.sign(e.deltaY) * step * 5;
-                    qSlider.value = Math.max(qSlider.min, Math.min(qSlider.max, currentVal));
-                    updateFilterFromSlider(wheelHoveredBand);
+                } else if (e.touches.length === 1) {
+                    const rect = canvas.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    handleMove(touch.clientX - rect.left, touch.clientY - rect.top);
                 }
             });
+
+            canvas.addEventListener('touchend', e => {
+                if (e.touches.length < 2) {
+                    initialPinchDistance = null;
+                    initialQ = null;
+                }
+                if (e.touches.length < 1) {
+                    handleUp();
+                }
+            });
+            canvas.addEventListener('touchcancel', handleUp);
         }
 
         function resizeCanvas() {
@@ -647,12 +705,16 @@
             
             const width = canvas.clientWidth;
             const height = canvas.clientHeight;
-            const center_y = height / 2;
+            const center_y = gainToY(0, height);
 
             ctx.clearRect(0, 0, width, height);
             ctx.fillStyle = '#1f2937';
             ctx.fillRect(0, 0, width, height);
             drawGrid(width, height);
+
+            if (isRtaOn) {
+                drawRTA(width, height);
+            }
 
             const frequencies = new Float32Array(width);
             for (let i = 0; i < width; i++) {
@@ -705,6 +767,17 @@
             }
             ctx.stroke();
             drawControlPoints(width, height);
+        }
+
+        function drawRTA(width, height) {
+            analyserNode.getByteFrequencyData(rtaDataArray);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            const barWidth = width / analyserNode.frequencyBinCount;
+            for (let i = 0; i < analyserNode.frequencyBinCount; i++) {
+                const barHeight = (rtaDataArray[i] / 255) * height;
+                const x = i * barWidth;
+                ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+            }
         }
 
         function drawGrid(width, height) {
@@ -767,25 +840,21 @@
         }
 
         function freqToX(freq, width) {
-            const minFreq = 20, maxFreq = 22000;
-            return width * (Math.log(freq) - Math.log(minFreq)) / (Math.log(maxFreq) - Math.log(minFreq));
+            return width * (Math.log(freq) - MIN_LOG_FREQ) / LOG_RANGE;
         }
 
         function xToFreq(x, width) {
-            const minFreq = 20, maxFreq = 22000;
-            const logMin = Math.log(minFreq);
-            const logMax = Math.log(maxFreq);
-            const logFreq = logMin + (x / width) * (logMax - logMin);
+            const logFreq = MIN_LOG_FREQ + (x / width) * LOG_RANGE;
             return Math.exp(logFreq);
         }
 
         function gainToY(gain, height) {
-            const totalDbRange = 36; // +/- 18dB
+            const totalDbRange = 30; // +/- 15dB for visual headroom
             return height * (0.5 - gain / totalDbRange);
         }
 
         function yToGain(y, height) {
-            const totalDbRange = 36;
+            const totalDbRange = 30;
             return (0.5 - y / height) * totalDbRange;
         }
 
