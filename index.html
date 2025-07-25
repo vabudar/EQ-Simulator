@@ -270,7 +270,7 @@
         };
         
         const challenges = [
-           { name: "Clip 1", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Edward%20Sounding%20Robotic.mp4" },
+            { name: "Clip 1", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Edward%20Sounding%20Robotic.mp4" },
              { name: "Clip 2", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4" },
              { name: "Clip 3", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Inconsistent%20Sound%20Across%20Sections%20-%20Made%20with%20Clipchamp.mp4" },
         ];
@@ -650,22 +650,26 @@
 
             canvas.addEventListener('mouseup', handleUp);
             
-            // --- NEW: Mouse Wheel Listener for Q Adjustment ---
+            // --- UPDATED: Mouse Wheel Listener with Logarithmic Scaling ---
             canvas.addEventListener('wheel', e => {
                 if (!isDragging || !selectedBand) return;
 
-                e.preventDefault(); // Prevent page from scrolling
+                e.preventDefault(); 
 
                 const qSlider = document.getElementById(`q-${selectedBand}`);
                 const minQ = parseFloat(qSlider.min);
                 const maxQ = parseFloat(qSlider.max);
                 let currentQ = parseFloat(qSlider.value);
                 
-                // Adjust Q based on scroll direction. deltaY is negative for scroll up.
-                // A smaller delta is a slower scroll, a larger delta is a faster scroll.
-                const scrollAmount = e.deltaY * -0.01; // Invert and scale
-                currentQ += scrollAmount;
+                // Define a base factor for the logarithmic scaling.
+                const logScaleFactor = 1.1; // Each 'step' changes Q by 10%
+                const sensitivity = 0.01; // Moderate scroll speed effect
 
+                // Apply a logarithmic (multiplicative) change.
+                // Scrolling up (negative deltaY) multiplies Q by >1.
+                // Scrolling down (positive deltaY) multiplies Q by <1 (divides).
+                currentQ *= Math.pow(logScaleFactor, e.deltaY * -sensitivity);
+                
                 // Clamp the new Q value to the slider's min/max
                 qSlider.value = Math.max(minQ, Math.min(maxQ, currentQ));
 
