@@ -7,13 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Using Cabin as a high-quality web-safe fallback that mirrors Gill Sans proportions -->
+    <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #111827;
-            --panel-color: #1f2937;
-            --grid-color: #374151;
-            --text-color: #d1d5db;
+            /* The specific green color from the provided image */
+            --bg-color: #516361; 
+            /* Darker variations for panels and depth */
+            --panel-color: #3d4a49;
+            --inner-bg: #2d3837;
+            --grid-color: #5d7572;
+            
+            --text-color: #e5e7eb;
             --text-muted-color: #9ca3af;
             --accent-color: #a78bfa;
 
@@ -23,13 +28,22 @@
             --hf-color: #f87171; /* red-400 */
             --curve-color: #facc15; /* yellow-400 */
         }
+        
         body {
-            font-family: 'Inter', sans-serif;
+            /* Gill Sans font stack */
+            font-family: "Gill Sans", "Gill Sans MT", "Cabin", Calibri, "Trebuchet MS", sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
+        h1, h2, .font-heading {
+            font-family: "Gill Sans", "Gill Sans MT", "Cabin", sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
         .control-knob {
             -webkit-appearance: none;
             appearance: none;
@@ -64,7 +78,7 @@
         }
         #eq-canvas {
             cursor: grab;
-            touch-action: none; /* Prevents default touch actions like scrolling */
+            touch-action: none;
         }
         #eq-canvas:active {
             cursor: grabbing;
@@ -73,7 +87,7 @@
             background-color: var(--panel-color);
             border-radius: 0.5rem;
             padding: 1rem;
-            border: 1px solid var(--grid-color);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         #play-icon-overlay {
             transition: opacity 0.2s ease-in-out;
@@ -81,46 +95,60 @@
         #progress-bar {
             transition: width 0.2s ease-out;
         }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div id="start-screen" class="text-center">
-        <h1 class="text-4xl font-bold mb-4">EQ Simulator</h1>
-        <p class="mb-8 text-gray-400">Click below to start the audio engine and begin.</p>
-        <button id="start-button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
-            Start
+        <h1 class="text-6xl mb-4 text-white">EQ Simulator</h1>
+        <p class="mb-8 text-gray-200 text-lg">Click below to start the audio engine and begin.</p>
+        <button id="start-button" class="bg-white text-[#516361] font-bold py-3 px-12 rounded-lg shadow-lg transition-transform transform hover:scale-105 text-xl">
+            START ENGINE
         </button>
     </div>
 
-    <div id="main-app" class="hidden w-full max-w-7xl mx-auto bg-black rounded-2xl shadow-2xl p-2 sm:p-4">
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 border-b border-gray-700 pb-4 gap-4 px-4">
-            <h1 class="text-2xl sm:text-3xl font-bold text-white">Parametric EQ</h1>
+    <div id="main-app" class="hidden w-full max-w-7xl mx-auto rounded-2xl shadow-2xl p-2 sm:p-4" style="background-color: var(--inner-bg);">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 border-b border-white/10 pb-4 gap-4 px-4">
+            <h1 class="text-3xl text-white uppercase tracking-wider">Parametric EQ</h1>
             <div class="flex items-center justify-center flex-wrap gap-2">
-                <select id="challenge-select" class="bg-gray-700 text-white py-2 px-3 rounded-lg"></select>
+                <select id="challenge-select" class="bg-black/30 border border-white/10 text-white py-2 px-3 rounded-lg font-medium"></select>
                 <input type="file" id="media-upload" class="hidden" accept="audio/*,video/*">
-                <label for="media-upload" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition-colors">Load Custom</label>
-                <button id="play-pause-button" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg w-24 flex items-center justify-center relative overflow-hidden">
+                <label for="media-upload" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition-colors text-sm">LOAD CUSTOM</label>
+                
+                <!-- Play/Pause Button updated with icons -->
+                <button id="play-pause-button" title="Play/Pause" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg w-16 flex items-center justify-center relative overflow-hidden">
                     <div id="progress-bar-container" class="absolute inset-0 bg-gray-500 hidden">
                         <div id="progress-bar" class="h-full bg-blue-500" style="width: 0%;"></div>
                     </div>
-                    <span id="play-pause-text" class="relative z-10">Play</span>
+                    <span id="play-pause-text" class="relative z-10 flex items-center justify-center">
+                        <svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="pause-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </span>
                 </button>
-                <button id="bypass-button" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Bypass</button>
-                <button id="rta-button" class="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">RTA</button>
-                <button id="reset-button" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg">Reset</button>
+
+                <!-- Bypass Button updated with a sine curve icon -->
+                <button id="bypass-button" title="Toggle Bypass" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
+                    <svg id="bypass-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path id="bypass-path" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                
+                <!-- RTA Button updated with an icon -->
+                <button id="rta-button" title="Toggle RTA" class="bg-teal-600 hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="16" width="3" height="4" rx="0.5" />
+                        <rect x="6.5" y="8" width="3" height="12" rx="0.5" />
+                        <rect x="11" y="4" width="3" height="16" rx="0.5" />
+                        <rect x="15.5" y="11" width="3" height="9" rx="0.5" />
+                        <rect x="20" y="17" width="3" height="3" rx="0.5" />
+                    </svg>
+                </button>
+                <button id="reset-button" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg text-sm">RESET</button>
             </div>
         </div>
 
-        <div class="bg-gray-900 rounded-lg p-2 mb-6 relative">
-             <div id="video-container" class="relative mb-4 bg-black cursor-pointer">
+        <div class="rounded-lg p-2 mb-6 relative" style="background-color: var(--panel-color);">
+             <div id="video-container" class="relative mb-4 bg-black rounded-lg overflow-hidden cursor-pointer">
                 <video id="media-player" loop preload="auto" crossOrigin="anonymous" class="w-full max-h-96" playsinline></video>
                 <div id="play-icon-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none bg-black bg-opacity-20">
                     <svg class="w-16 h-16 text-white opacity-75" fill="currentColor" viewBox="0 0 20 20">
@@ -130,80 +158,84 @@
             </div>
              <div class="flex items-center gap-2 px-2 mb-2">
                 <span id="current-time" class="font-mono text-sm">00:00</span>
-                <input type="range" id="time-slider" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" value="0" step="0.1">
+                <input type="range" id="time-slider" class="w-full h-2 bg-black/30 rounded-lg appearance-none cursor-pointer" value="0" step="0.1">
                 <span id="duration" class="font-mono text-sm">00:00</span>
             </div>
-            <canvas id="eq-canvas" class="w-full h-[500px]"></canvas>
+            <canvas id="eq-canvas" class="w-full h-[400px] sm:h-[500px] rounded-lg"></canvas>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- LF Band -->
             <div class="control-panel">
-                <h2 class="text-xl font-bold text-center mb-4" style="color: var(--lf-color);">LF</h2>
+                <h2 class="text-xl text-center mb-4 uppercase tracking-wider" style="color: var(--lf-color);">LF</h2>
                 <div class="space-y-4">
                     <div>
-                        <label for="freq-lf" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-lf-val" class="font-mono">80 Hz</span></label>
+                        <label for="freq-lf" class="flex justify-between text-sm uppercase tracking-tight"><span>Frequency</span><span id="freq-lf-val" class="font-mono">80 Hz</span></label>
                         <input id="freq-lf" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
-                        <label for="gain-lf" class="flex justify-between text-sm"><span>Gain</span><span id="gain-lf-val" class="font-mono">0.0 dB</span></label>
+                        <label for="gain-lf" class="flex justify-between text-sm uppercase tracking-tight"><span>Gain</span><span id="gain-lf-val" class="font-mono">0.0 dB</span></label>
                         <input id="gain-lf" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
                     </div>
                     <div>
-                        <label for="q-lf" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-lf-val" class="font-mono">1.00</span></label>
+                        <label for="q-lf" class="flex justify-between text-sm uppercase tracking-tight"><span>Width (Q)</span><span id="q-lf-val" class="font-mono">1.00</span></label>
                         <input id="q-lf" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
                     </div>
                 </div>
             </div>
 
+            <!-- LM Band -->
             <div class="control-panel">
-                 <h2 class="text-xl font-bold text-center mb-4" style="color: var(--lm-color);">LM</h2>
+                 <h2 class="text-xl text-center mb-4 uppercase tracking-wider" style="color: var(--lm-color);">LM</h2>
                 <div class="space-y-4">
                     <div>
-                        <label for="freq-lm" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-lm-val" class="font-mono">400 Hz</span></label>
+                        <label for="freq-lm" class="flex justify-between text-sm uppercase tracking-tight"><span>Frequency</span><span id="freq-lm-val" class="font-mono">400 Hz</span></label>
                         <input id="freq-lm" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
-                        <label for="gain-lm" class="flex justify-between text-sm"><span>Gain</span><span id="gain-lm-val" class="font-mono">0.0 dB</span></label>
+                        <label for="gain-lm" class="flex justify-between text-sm uppercase tracking-tight"><span>Gain</span><span id="gain-lm-val" class="font-mono">0.0 dB</span></label>
                         <input id="gain-lm" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
                     </div>
                     <div>
-                        <label for="q-lm" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-lm-val" class="font-mono">1.00</span></label>
+                        <label for="q-lm" class="flex justify-between text-sm uppercase tracking-tight"><span>Width (Q)</span><span id="q-lm-val" class="font-mono">1.00</span></label>
                         <input id="q-lm" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
                     </div>
                 </div>
             </div>
 
+            <!-- HM Band -->
             <div class="control-panel">
-                <h2 class="text-xl font-bold text-center mb-4" style="color: var(--hm-color);">HM</h2>
+                <h2 class="text-xl text-center mb-4 uppercase tracking-wider" style="color: var(--hm-color);">HM</h2>
                 <div class="space-y-4">
                     <div>
-                        <label for="freq-hm" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-hm-val" class="font-mono">2500 Hz</span></label>
+                        <label for="freq-hm" class="flex justify-between text-sm uppercase tracking-tight"><span>Frequency</span><span id="freq-hm-val" class="font-mono">2500 Hz</span></label>
                         <input id="freq-hm" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
-                        <label for="gain-hm" class="flex justify-between text-sm"><span>Gain</span><span id="gain-hm-val" class="font-mono">0.0 dB</span></label>
+                        <label for="gain-hm" class="flex justify-between text-sm uppercase tracking-tight"><span>Gain</span><span id="gain-hm-val" class="font-mono">0.0 dB</span></label>
                         <input id="gain-hm" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
                     </div>
                     <div>
-                        <label for="q-hm" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-hm-val" class="font-mono">1.00</span></label>
+                        <label for="q-hm" class="flex justify-between text-sm uppercase tracking-tight"><span>Width (Q)</span><span id="q-hm-val" class="font-mono">1.00</span></label>
                         <input id="q-hm" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
                     </div>
                 </div>
             </div>
 
+            <!-- HF Band -->
             <div class="control-panel">
-                <h2 class="text-xl font-bold text-center mb-4" style="color: var(--hf-color);">HF</h2>
+                <h2 class="text-xl text-center mb-4 uppercase tracking-wider" style="color: var(--hf-color);">HF</h2>
                 <div class="space-y-4">
                     <div>
-                        <label for="freq-hf" class="flex justify-between text-sm"><span>Frequency</span><span id="freq-hf-val" class="font-mono">10000 Hz</span></label>
+                        <label for="freq-hf" class="flex justify-between text-sm uppercase tracking-tight"><span>Frequency</span><span id="freq-hf-val" class="font-mono">10000 Hz</span></label>
                         <input id="freq-hf" type="range" min="0" max="1000" step="1" class="control-knob">
                     </div>
                     <div>
-                        <label for="gain-hf" class="flex justify-between text-sm"><span>Gain</span><span id="gain-hf-val" class="font-mono">0.0 dB</span></label>
+                        <label for="gain-hf" class="flex justify-between text-sm uppercase tracking-tight"><span>Gain</span><span id="gain-hf-val" class="font-mono">0.0 dB</span></label>
                         <input id="gain-hf" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
                     </div>
                     <div>
-                        <label for="q-hf" class="flex justify-between text-sm"><span>Width (Q)</span><span id="q-hf-val" class="font-mono">1.00</span></label>
+                        <label for="q-hf" class="flex justify-between text-sm uppercase tracking-tight"><span>Width (Q)</span><span id="q-hf-val" class="font-mono">1.00</span></label>
                         <input id="q-hf" type="range" min="0.1" max="10" value="1" step="0.1" class="control-knob">
                     </div>
                 </div>
@@ -212,12 +244,13 @@
     </div>
 
     <script>
-        // --- DOM Elements ---
+        // --- Web Audio and App Logic ---
         const startScreen = document.getElementById('start-screen');
         const mainApp = document.getElementById('main-app');
         const startButton = document.getElementById('start-button');
         const playPauseButton = document.getElementById('play-pause-button');
         const bypassButton = document.getElementById('bypass-button');
+        const bypassPath = document.getElementById('bypass-path');
         const resetButton = document.getElementById('reset-button');
         const rtaButton = document.getElementById('rta-button');
         const mediaPlayer = document.getElementById('media-player');
@@ -233,27 +266,14 @@
         const progressBarContainer = document.getElementById('progress-bar-container');
         const progressBar = document.getElementById('progress-bar');
         const playPauseText = document.getElementById('play-pause-text');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
 
-        // --- Web Audio API Setup ---
-        let audioContext;
-        let sourceNode;
-        let filters = {};
-        let processedGainNode;
-        let bypassGainNode;
-        let preEqAnalyser, postEqAnalyser;
-        let preRtaDataArray, postRtaDataArray;
-        let isPlaying = false;
-        let isBypassed = false;
-        let isInitialized = false;
-        let isRtaOn = false;
-
-        // --- Interaction State ---
-        let selectedBand = null;
-        let hoveredBand = null;
-        let isDragging = false;
-        let lastTap = { time: 0, bandId: null };
-        let initialPinchDistance = null;
-        let initialQ = null;
+        let audioContext, sourceNode, filters = {}, processedGainNode, bypassGainNode;
+        let preEqAnalyser, postEqAnalyser, preRtaDataArray, postRtaDataArray;
+        let isPlaying = false, isBypassed = false, isInitialized = false, isRtaOn = false;
+        let selectedBand = null, hoveredBand = null, isDragging = false;
+        let lastTap = { time: 0, bandId: null }, initialPinchDistance = null, initialQ = null;
 
         const bands = {
             lf: { type: 'peaking', color: 'var(--lf-color)', colorRgba: 'rgba(74, 222, 128, 0.3)' },
@@ -271,51 +291,40 @@
         
         const challenges = [
             { name: "Clip 1", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Edward%20Sounding%20Robotic.mp4" },
-             { name: "Clip 2", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4" },
-             { name: "Clip 3", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Inconsistent%20Sound%20Across%20Sections%20-%20Made%20with%20Clipchamp.mp4" },
+            { name: "Clip 2", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4" },
+            { name: "Clip 3", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Inconsistent%20Sound%20Across%20Sections%20-%20Made%20with%20Clipchamp.mp4" },
         ];
 
-        // --- Logarithmic Scale Constants ---
-        const MIN_FREQ = 30;
-        const MAX_FREQ = 20000;
-        const MIN_LOG_FREQ = Math.log(MIN_FREQ);
-        const MAX_LOG_FREQ = Math.log(MAX_FREQ);
-        const LOG_RANGE = MAX_LOG_FREQ - MIN_LOG_FREQ;
+        const MIN_FREQ = 30, MAX_FREQ = 20000, MIN_LOG_FREQ = Math.log(MIN_FREQ);
+        const MAX_LOG_FREQ = Math.log(MAX_FREQ), LOG_RANGE = MAX_LOG_FREQ - MIN_LOG_FREQ, GAIN_RANGE = 20;
 
-        const GAIN_RANGE = 20;
+        const freqToX = (f, w) => w * (Math.log(f) - MIN_LOG_FREQ) / LOG_RANGE;
+        const xToFreq = (x, w) => Math.exp(MIN_LOG_FREQ + (x / w) * LOG_RANGE);
+        const gainToY = (g, h) => h * (0.5 - g / 40);
+        const yToGain = (y, h) => (0.5 - y / h) * 40;
 
-        // --- Initialization ---
         startButton.addEventListener('click', () => {
             startScreen.classList.add('hidden');
             mainApp.classList.remove('hidden');
-            setTimeout(() => {
-                if (!isInitialized) {
-                    initAudio();
-                }
-            }, 0);
+            setTimeout(() => { if (!isInitialized) initAudio(); }, 0);
         });
 
         function initAudio() {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             enablePlaybackControls(false, true);
-            
             sourceNode = audioContext.createMediaElementSource(mediaPlayer);
             processedGainNode = audioContext.createGain();
             bypassGainNode = audioContext.createGain();
-            
             preEqAnalyser = audioContext.createAnalyser();
             preEqAnalyser.fftSize = 2048;
             preEqAnalyser.smoothingTimeConstant = 0.92;
             preRtaDataArray = new Uint8Array(preEqAnalyser.frequencyBinCount);
-            
             postEqAnalyser = audioContext.createAnalyser();
             postEqAnalyser.fftSize = 2048;
             postEqAnalyser.smoothingTimeConstant = 0.92;
             postRtaDataArray = new Uint8Array(postEqAnalyser.frequencyBinCount);
-
             let lastNode = sourceNode;
-            sourceNode.connect(preEqAnalyser); // Pre-EQ analysis
-
+            sourceNode.connect(preEqAnalyser);
             Object.keys(bands).forEach(bandId => {
                 const filter = audioContext.createBiquadFilter();
                 filter.type = bands[bandId].type;
@@ -324,597 +333,311 @@
                 lastNode = filter;
             });
             lastNode.connect(processedGainNode);
-            processedGainNode.connect(postEqAnalyser); // Post-EQ analysis
+            processedGainNode.connect(postEqAnalyser);
             postEqAnalyser.connect(audioContext.destination);
-            
             sourceNode.connect(bypassGainNode);
             bypassGainNode.connect(audioContext.destination);
-
             processedGainNode.gain.value = 1;
             bypassGainNode.gain.value = 0;
-            
             setupChallenges();
             setControlsToDefaults();
-            
             setupControls();
             setupFileUpload();
             setupCanvasInteraction();
             setupMediaControls();
-            
+            updateBypassIcon();
             resizeCanvas();
             drawEQCurve();
             isInitialized = true;
         }
 
+        function updatePlayPauseIcons() {
+            if (isPlaying) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        function updateBypassIcon() {
+            if (isBypassed) {
+                // Engaged = EQ OFF = Yellow
+                bypassPath.setAttribute('stroke', '#facc15'); // yellow-400
+                bypassButton.classList.replace('bg-gray-700', 'bg-gray-800');
+            } else {
+                // Not Engaged = EQ ON = Greyed out
+                bypassPath.setAttribute('stroke', '#6b7280'); // gray-500
+                bypassButton.classList.replace('bg-gray-800', 'bg-gray-700');
+            }
+        }
+
         function enablePlaybackControls(enabled, isLoading = false) {
             playPauseButton.disabled = !enabled;
             playPauseButton.classList.toggle('opacity-50', !enabled);
-            playPauseButton.classList.toggle('cursor-not-allowed', !enabled);
-            
             if (isLoading) {
                 playPauseText.classList.add('hidden');
                 progressBarContainer.classList.remove('hidden');
-                progressBar.style.width = '0%';
             } else {
                 playPauseText.classList.remove('hidden');
                 progressBarContainer.classList.add('hidden');
-                playPauseText.textContent = isPlaying ? 'Pause' : 'Play';
+                updatePlayPauseIcons();
             }
         }
         
         function setupChallenges() {
-            challenges.forEach((challenge) => {
-                const option = document.createElement('option');
-                option.value = challenge.url;
-                option.textContent = challenge.name;
-                challengeSelect.appendChild(option);
+            challenges.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.url; opt.textContent = c.name;
+                challengeSelect.appendChild(opt);
             });
-            
             mediaPlayer.src = challenges[0].url;
-
-            challengeSelect.addEventListener('change', (event) => {
-                const newUrl = event.target.value;
+            challengeSelect.addEventListener('change', e => {
                 if (isPlaying) playPauseButton.click();
-                mediaPlayer.src = newUrl;
+                mediaPlayer.src = e.target.value;
                 mediaPlayer.load();
                 enablePlaybackControls(false, true);
             });
         }
 
-        // --- Conversion functions for logarithmic sliders ---
-        function freqToSlider(freq) {
-            if (freq <= 0) return 0;
-            return 1000 * (Math.log(freq) - MIN_LOG_FREQ) / LOG_RANGE;
-        }
-
-        function sliderToFreq(sliderVal) {
-            const logFreq = MIN_LOG_FREQ + (sliderVal / 1000) * LOG_RANGE;
-            return Math.exp(logFreq);
-        }
+        const freqToSlider = f => f <= 0 ? 0 : 1000 * (Math.log(f) - MIN_LOG_FREQ) / LOG_RANGE;
+        const sliderToFreq = s => Math.exp(MIN_LOG_FREQ + (s / 1000) * LOG_RANGE);
 
         function setupControls() {
-            Object.keys(bands).forEach(bandId => {
-                const freqSlider = document.getElementById(`freq-${bandId}`);
-                const gainSlider = document.getElementById(`gain-${bandId}`);
-                const qSlider = document.getElementById(`q-${bandId}`);
-                
-                freqSlider.addEventListener('input', () => updateFilterFromSlider(bandId));
-                gainSlider.addEventListener('input', () => updateFilterFromSlider(bandId));
-                qSlider.addEventListener('input', () => updateFilterFromSlider(bandId));
-
-                gainSlider.addEventListener('dblclick', () => {
-                    gainSlider.value = 0;
-                    updateFilterFromSlider(bandId);
-                });
-                qSlider.addEventListener('dblclick', () => {
-                    qSlider.value = 1;
-                    updateFilterFromSlider(bandId);
-                });
+            Object.keys(bands).forEach(bid => {
+                const fS = document.getElementById(`freq-${bid}`), gS = document.getElementById(`gain-${bid}`), qS = document.getElementById(`q-${bid}`);
+                fS.addEventListener('input', () => updateFilterFromSlider(bid));
+                gS.addEventListener('input', () => updateFilterFromSlider(bid));
+                qS.addEventListener('input', () => updateFilterFromSlider(bid));
+                gS.addEventListener('dblclick', () => { gS.value = 0; updateFilterFromSlider(bid); });
+                qS.addEventListener('dblclick', () => { qS.value = 1; updateFilterFromSlider(bid); });
             });
         }
 
         function setupFileUpload() {
-            mediaUploadInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
+            mediaUploadInput.addEventListener('change', e => {
+                const file = e.target.files[0];
                 if (!file) return;
                 if (isPlaying) playPauseButton.click();
                 mediaPlayer.src = URL.createObjectURL(file);
                 mediaPlayer.load();
-                
-                let customOption = challengeSelect.querySelector('option[value="custom"]');
-                if (!customOption) {
-                    customOption = document.createElement('option');
-                    customOption.value = "custom";
-                    challengeSelect.appendChild(customOption);
-                }
-                customOption.textContent = file.name;
-                customOption.selected = true;
-
                 enablePlaybackControls(false, true);
             });
         }
         
-        function setControlsToDefaults() {
-            applyEqPreset(initialDefaults);
-        }
+        function setControlsToDefaults() { applyEqPreset(initialDefaults); }
 
         function setupMediaControls() {
             videoContainer.addEventListener('click', () => playPauseButton.click());
-            mediaPlayer.addEventListener('play', () => {
-                playIconOverlay.classList.add('hidden');
-                playPauseText.textContent = 'Pause';
+            mediaPlayer.addEventListener('play', () => { 
+                playIconOverlay.classList.add('hidden'); 
+                isPlaying = true;
+                updatePlayPauseIcons();
             });
-            mediaPlayer.addEventListener('pause', () => {
-                playIconOverlay.classList.remove('hidden');
-                playPauseText.textContent = 'Play';
+            mediaPlayer.addEventListener('pause', () => { 
+                playIconOverlay.classList.remove('hidden'); 
+                isPlaying = false;
+                updatePlayPauseIcons();
             });
             mediaPlayer.addEventListener('canplay', () => enablePlaybackControls(true, false));
-            
             mediaPlayer.addEventListener('progress', () => {
                 if (mediaPlayer.duration > 0) {
-                    const bufferedEnd = mediaPlayer.buffered.length > 0 ? mediaPlayer.buffered.end(mediaPlayer.buffered.length - 1) : 0;
-                    const percent = (bufferedEnd / mediaPlayer.duration) * 100;
-                    progressBar.style.width = `${percent}%`;
+                    const bE = mediaPlayer.buffered.length > 0 ? mediaPlayer.buffered.end(mediaPlayer.buffered.length - 1) : 0;
+                    progressBar.style.width = `${(bE / mediaPlayer.duration) * 100}%`;
                 }
             });
-
-            mediaPlayer.addEventListener('loadedmetadata', () => {
-                timeSlider.max = mediaPlayer.duration;
-                durationDisplay.textContent = formatTime(mediaPlayer.duration);
-            });
-
-            mediaPlayer.addEventListener('timeupdate', () => {
-                timeSlider.value = mediaPlayer.currentTime;
-                currentTimeDisplay.textContent = formatTime(mediaPlayer.currentTime);
-            });
-
-            timeSlider.addEventListener('input', () => {
-                mediaPlayer.currentTime = timeSlider.value;
-            });
+            mediaPlayer.addEventListener('loadedmetadata', () => { timeSlider.max = mediaPlayer.duration; durationDisplay.textContent = formatTime(mediaPlayer.duration); });
+            mediaPlayer.addEventListener('timeupdate', () => { timeSlider.value = mediaPlayer.currentTime; currentTimeDisplay.textContent = formatTime(mediaPlayer.currentTime); });
+            timeSlider.addEventListener('input', () => mediaPlayer.currentTime = timeSlider.value);
         }
 
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        const formatTime = s => `${Math.floor(s / 60).toString().padStart(2, '0')}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+
+        function updateFilter(bid, f, g, q) {
+            if (!filters[bid]) return;
+            filters[bid].frequency.value = f; filters[bid].gain.value = g; filters[bid].Q.value = q;
+            document.getElementById(`freq-${bid}-val`).textContent = `${Math.round(f)} Hz`;
+            document.getElementById(`gain-${bid}-val`).textContent = `${g.toFixed(1)} dB`;
+            document.getElementById(`q-${bid}-val`).textContent = q.toFixed(2);
         }
 
-        function updateFilter(bandId, freq, gain, q) {
-            if (!filters[bandId]) return;
-            const filter = filters[bandId];
-            
-            filter.frequency.value = freq;
-            filter.gain.value = gain;
-            filter.Q.value = q;
-            
-            document.getElementById(`freq-${bandId}-val`).textContent = `${Math.round(freq)} Hz`;
-            document.getElementById(`gain-${bandId}-val`).textContent = `${gain.toFixed(1)} dB`;
-            document.getElementById(`q-${bandId}-val`).textContent = q.toFixed(2);
-        }
-
-        function updateFilterFromSlider(bandId) {
-            const freqSlider = document.getElementById(`freq-${bandId}`);
-            const gainSlider = document.getElementById(`gain-${bandId}`);
-            const qSlider = document.getElementById(`q-${bandId}`);
-            
-            const freq = sliderToFreq(parseFloat(freqSlider.value));
-            const gain = parseFloat(gainSlider.value);
-            const q = parseFloat(qSlider.value);
-            
-            updateFilter(bandId, freq, gain, q);
-        }
-
-        function updateAllFilters() {
-            Object.keys(bands).forEach(updateFilterFromSlider);
+        function updateFilterFromSlider(bid) {
+            const f = sliderToFreq(parseFloat(document.getElementById(`freq-${bid}`).value));
+            const g = parseFloat(document.getElementById(`gain-${bid}`).value);
+            const q = parseFloat(document.getElementById(`q-${bid}`).value);
+            updateFilter(bid, f, g, q);
         }
 
         playPauseButton.addEventListener('click', async () => {
             if (!isInitialized || playPauseButton.disabled) return;
             if (audioContext.state === 'suspended') await audioContext.resume();
-            isPlaying = !isPlaying;
-            if (isPlaying) {
+            
+            if (!isPlaying) {
                 await mediaPlayer.play();
                 playPauseButton.classList.replace('bg-green-600', 'bg-yellow-500');
-                playPauseButton.classList.replace('hover:bg-green-500', 'hover:bg-yellow-400');
             } else {
                 mediaPlayer.pause();
                 playPauseButton.classList.replace('bg-yellow-500', 'bg-green-600');
-                playPauseButton.classList.replace('hover:bg-yellow-400', 'hover:bg-green-500');
             }
         });
 
         bypassButton.addEventListener('click', () => {
             isBypassed = !isBypassed;
-            
-            if (isBypassed) {
-                processedGainNode.gain.value = 0;
-                bypassGainNode.gain.value = 1;
-            } else {
-                processedGainNode.gain.value = 1;
-                bypassGainNode.gain.value = 0;
-            }
-
-            bypassButton.textContent = isBypassed ? 'Engaged' : 'Bypass';
-            bypassButton.classList.toggle('bg-red-600');
-            bypassButton.classList.toggle('hover:bg-red-500');
-            bypassButton.classList.toggle('bg-gray-600');
-            bypassButton.classList.toggle('hover:bg-gray-500');
+            processedGainNode.gain.value = isBypassed ? 0 : 1;
+            bypassGainNode.gain.value = isBypassed ? 1 : 0;
+            updateBypassIcon();
         });
         
         resetButton.addEventListener('click', setControlsToDefaults);
-
-        rtaButton.addEventListener('click', () => {
-            isRtaOn = !isRtaOn;
-            rtaButton.classList.toggle('bg-teal-600');
-            rtaButton.classList.toggle('bg-opacity-50');
+        rtaButton.addEventListener('click', () => { 
+            isRtaOn = !isRtaOn; 
+            rtaButton.classList.toggle('bg-teal-600'); 
+            rtaButton.classList.toggle('bg-teal-400'); // Lighter shade when active
         });
 
-        function applyEqPreset(settings) {
-             Object.keys(settings).forEach(bandId => {
-                const s = settings[bandId];
-                document.getElementById(`freq-${bandId}`).value = freqToSlider(s.freq);
-                document.getElementById(`gain-${bandId}`).value = s.gain;
-                if (s.q) document.getElementById(`q-${bandId}`).value = s.q;
+        function applyEqPreset(sets) {
+            Object.keys(sets).forEach(bid => {
+                const s = sets[bid];
+                document.getElementById(`freq-${bid}`).value = freqToSlider(s.freq);
+                document.getElementById(`gain-${bid}`).value = s.gain;
+                if (s.q) document.getElementById(`q-${bid}`).value = s.q;
             });
-            updateAllFilters();
+            Object.keys(sets).forEach(updateFilterFromSlider);
         }
 
         function setupCanvasInteraction() {
-            const getClosestBand = (x, y) => {
-                let closestBand = null;
-                let minDistance = Infinity;
-
-                for (const bandId of Object.keys(bands)) {
-                    const pointX = freqToX(sliderToFreq(document.getElementById(`freq-${bandId}`).value), canvas.clientWidth);
-                    const pointY = gainToY(parseFloat(document.getElementById(`gain-${bandId}`).value), canvas.clientHeight);
-                    const distance = Math.sqrt(Math.pow(x - pointX, 2) + Math.pow(y - pointY, 2));
-                    
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestBand = bandId;
-                    }
-                }
-                return (minDistance < 25) ? closestBand : null;
+            const getClosest = (x, y) => {
+                let closest = null, minDist = Infinity;
+                Object.keys(bands).forEach(bid => {
+                    const px = freqToX(sliderToFreq(document.getElementById(`freq-${bid}`).value), canvas.clientWidth);
+                    const py = gainToY(parseFloat(document.getElementById(`gain-${bid}`).value), canvas.clientHeight);
+                    const d = Math.sqrt(Math.pow(x - px, 2) + Math.pow(y - py, 2));
+                    if (d < minDist) { minDist = d; closest = bid; }
+                });
+                return minDist < 30 ? closest : null;
             };
 
             const handleDown = (x, y) => {
-                const band = getClosestBand(x, y);
-                
+                const bid = getClosest(x, y);
                 const now = Date.now();
-                if (band && band === lastTap.bandId && (now - lastTap.time) < 300) {
-                    const d = initialDefaults[band];
-                    document.getElementById(`gain-${band}`).value = d.gain;
-                    updateFilterFromSlider(band);
-
-                    lastTap = { time: 0, bandId: null };
-                    isDragging = false;
-                    selectedBand = null;
-                    return;
+                if (bid && bid === lastTap.bandId && (now - lastTap.time) < 300) {
+                    document.getElementById(`gain-${bid}`).value = initialDefaults[bid].gain;
+                    updateFilterFromSlider(bid);
+                    selectedBand = null; isDragging = false; return;
                 }
-                
-                lastTap = { time: now, bandId: band };
-
-                if (band) {
-                    selectedBand = band;
-                    isDragging = true;
-                }
+                lastTap = { time: now, bandId: bid };
+                if (bid) { selectedBand = bid; isDragging = true; }
             };
 
             const handleMove = (x, y) => {
-                hoveredBand = getClosestBand(x, y);
-
+                hoveredBand = getClosest(x, y);
                 if (!isDragging || !selectedBand) return;
-                
-                const freqSlider = document.getElementById(`freq-${selectedBand}`);
-                const gainSlider = document.getElementById(`gain-${selectedBand}`);
-
-                const newFreq = xToFreq(x, canvas.clientWidth);
-                const newGain = yToGain(y, canvas.clientHeight);
-
-                freqSlider.value = freqToSlider(Math.max(MIN_FREQ, Math.min(MAX_FREQ, newFreq)));
-                gainSlider.value = Math.max(-GAIN_RANGE, Math.min(GAIN_RANGE, newGain));
-                
+                const nf = xToFreq(x, canvas.clientWidth);
+                const ng = yToGain(y, canvas.clientHeight);
+                document.getElementById(`freq-${selectedBand}`).value = freqToSlider(Math.max(MIN_FREQ, Math.min(MAX_FREQ, nf)));
+                document.getElementById(`gain-${selectedBand}`).value = Math.max(-GAIN_RANGE, Math.min(GAIN_RANGE, ng));
                 updateFilterFromSlider(selectedBand);
             };
 
-            const handleUp = () => {
-                isDragging = false;
-                selectedBand = null;
-            };
-            
-            canvas.addEventListener('dblclick', e => {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const bandToReset = getClosestBand(x, y);
-                if (bandToReset) {
-                    document.getElementById(`gain-${bandToReset}`).value = 0;
-                    updateFilterFromSlider(bandToReset);
-                }
-            });
-
-            canvas.addEventListener('mousedown', e => {
-                const rect = canvas.getBoundingClientRect();
-                handleDown(e.clientX - rect.left, e.clientY - rect.top);
-            });
-
-            canvas.addEventListener('mousemove', e => {
-                const rect = canvas.getBoundingClientRect();
-                handleMove(e.clientX - rect.left, e.clientY - rect.top);
-            });
-            
-            canvas.addEventListener('mouseleave', () => {
-                hoveredBand = null;
-                handleUp();
-            });
-
-            canvas.addEventListener('mouseup', handleUp);
-            
-            // --- UPDATED: Mouse Wheel Listener with Logarithmic Scaling ---
+            canvas.addEventListener('mousedown', e => { const r = canvas.getBoundingClientRect(); handleDown(e.clientX - r.left, e.clientY - r.top); });
+            canvas.addEventListener('mousemove', e => { const r = canvas.getBoundingClientRect(); handleMove(e.clientX - r.left, e.clientY - r.top); });
+            canvas.addEventListener('mouseleave', () => { hoveredBand = null; isDragging = false; });
+            canvas.addEventListener('mouseup', () => { isDragging = false; selectedBand = null; });
             canvas.addEventListener('wheel', e => {
                 if (!isDragging || !selectedBand) return;
-
                 e.preventDefault(); 
-
-                const qSlider = document.getElementById(`q-${selectedBand}`);
-                const minQ = parseFloat(qSlider.min);
-                const maxQ = parseFloat(qSlider.max);
-                let currentQ = parseFloat(qSlider.value);
-                
-                // Define a base factor for the logarithmic scaling.
-                const logScaleFactor = 1.1; // Each 'step' changes Q by 10%
-                const sensitivity = 0.01; // Moderate scroll speed effect
-
-                // Apply a logarithmic (multiplicative) change.
-                // Scrolling up (negative deltaY) multiplies Q by >1.
-                // Scrolling down (positive deltaY) multiplies Q by <1 (divides).
-                currentQ *= Math.pow(logScaleFactor, e.deltaY * -sensitivity);
-                
-                // Clamp the new Q value to the slider's min/max
-                qSlider.value = Math.max(minQ, Math.min(maxQ, currentQ));
-
+                const qS = document.getElementById(`q-${selectedBand}`);
+                let cQ = parseFloat(qS.value);
+                cQ *= Math.pow(1.1, e.deltaY * -0.01);
+                qS.value = Math.max(0.1, Math.min(10, cQ));
                 updateFilterFromSlider(selectedBand);
-            }, { passive: false }); // `passive: false` is required for `preventDefault()` to work
+            }, { passive: false });
 
-            // --- Touch Listeners (including existing Pinch-to-Zoom) ---
-            canvas.addEventListener('touchstart', e => {
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                handleDown(touch.clientX - rect.left, touch.clientY - rect.top);
-            });
-
+            canvas.addEventListener('touchstart', e => { e.preventDefault(); const r = canvas.getBoundingClientRect(); handleDown(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top); });
             canvas.addEventListener('touchmove', e => {
                 e.preventDefault();
-                // Pinch-to-zoom logic for Q adjustment
                 if (e.touches.length === 2 && selectedBand) {
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const currentDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
-
-                    if (initialPinchDistance === null) {
-                        initialPinchDistance = currentDistance;
-                        const qSlider = document.getElementById(`q-${selectedBand}`);
-                        initialQ = parseFloat(qSlider.value);
-                    }
-                    
-                    const scale = currentDistance / initialPinchDistance;
-                    const qSlider = document.getElementById(`q-${selectedBand}`);
-                    // Invert scale for intuitive Q control (pinch-out -> lower Q, pinch-in -> higher Q)
-                    const newQ = Math.max(parseFloat(qSlider.min), Math.min(parseFloat(qSlider.max), initialQ / scale));
-                    qSlider.value = newQ;
+                    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    if (initialPinchDistance === null) { initialPinchDistance = dist; initialQ = parseFloat(document.getElementById(`q-${selectedBand}`).value); }
+                    document.getElementById(`q-${selectedBand}`).value = Math.max(0.1, Math.min(10, initialQ / (dist / initialPinchDistance)));
                     updateFilterFromSlider(selectedBand);
-
-                } else if (e.touches.length === 1) { // Standard drag logic
-                    const rect = canvas.getBoundingClientRect();
-                    const touch = e.touches[0];
-                    handleMove(touch.clientX - rect.left, touch.clientY - rect.top);
+                } else if (e.touches.length === 1) {
+                    const r = canvas.getBoundingClientRect(); handleMove(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
                 }
             });
-
-            canvas.addEventListener('touchend', e => {
-                // Reset pinch state when fingers are lifted
-                if (e.touches.length < 2) {
-                    initialPinchDistance = null;
-                    initialQ = null;
-                }
-                if (e.touches.length < 1) {
-                    handleUp();
-                }
-            });
-            canvas.addEventListener('touchcancel', handleUp);
+            canvas.addEventListener('touchend', () => { initialPinchDistance = null; isDragging = false; selectedBand = null; });
         }
 
         function resizeCanvas() {
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            ctx.scale(dpr, dpr);
+            const dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect();
+            canvas.width = r.width * dpr; canvas.height = r.height * dpr; ctx.scale(dpr, dpr);
         }
 
         function drawEQCurve() {
             requestAnimationFrame(drawEQCurve);
             if (!isInitialized) return;
-            
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-            const center_y = gainToY(0, height);
-
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = '#1f2937';
-            ctx.fillRect(0, 0, width, height);
-            drawGrid(width, height);
-
-            if (isRtaOn) {
-                drawRTA(width, height);
-            }
-
-            const frequencies = new Float32Array(width);
-            for (let i = 0; i < width; i++) {
-                frequencies[i] = xToFreq(i, width);
-            }
-
-            const magResponse = new Float32Array(width);
-            const phaseResponse = new Float32Array(width);
-            
+            const w = canvas.clientWidth, h = canvas.clientHeight, cy = gainToY(0, h), iB = getComputedStyle(document.documentElement).getPropertyValue('--inner-bg').trim();
+            ctx.clearRect(0, 0, w, h); ctx.fillStyle = iB; ctx.fillRect(0, 0, w, h); drawGrid(w, h);
+            if (isRtaOn) drawRTA(w, h);
+            const freqs = new Float32Array(w);
+            for (let i = 0; i < w; i++) freqs[i] = xToFreq(i, w);
+            const mR = new Float32Array(w), pR = new Float32Array(w);
             if (!isBypassed) {
-                Object.keys(bands).forEach(bandId => {
-                    const filter = filters[bandId];
-                    const bandInfo = bands[bandId];
-                    
-                    filter.getFrequencyResponse(frequencies, magResponse, phaseResponse);
-
-                    ctx.beginPath();
-                    ctx.fillStyle = bandInfo.colorRgba;
-
-                    ctx.moveTo(0, center_y);
-                    for (let i = 0; i < width; i++) {
-                        const db = 20 * Math.log10(magResponse[i]);
-                        const y = gainToY(db, height);
-                        ctx.lineTo(i, y);
-                    }
-                    ctx.lineTo(width, center_y);
-                    ctx.closePath();
-                    ctx.fill();
+                Object.keys(bands).forEach(bid => {
+                    filters[bid].getFrequencyResponse(freqs, mR, pR);
+                    ctx.beginPath(); ctx.fillStyle = bands[bid].colorRgba; ctx.moveTo(0, cy);
+                    for (let i = 0; i < w; i++) ctx.lineTo(i, gainToY(20 * Math.log10(mR[i]), h));
+                    ctx.lineTo(w, cy); ctx.fill();
                 });
             }
-
-            const combinedResponse = new Float32Array(width).fill(1);
-            Object.values(filters).forEach(filter => {
-                filter.getFrequencyResponse(frequencies, magResponse, phaseResponse);
-                for (let i = 0; i < width; i++) combinedResponse[i] *= magResponse[i];
-            });
-
-            ctx.beginPath();
-            const curveColor = getComputedStyle(document.documentElement).getPropertyValue('--curve-color').trim();
-            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
-            ctx.strokeStyle = isBypassed ? gridColor : curveColor;
-            ctx.lineWidth = 2.5;
-            for (let i = 0; i < width; i++) {
-                if (combinedResponse[i] > 0) {
-                    const db = 20 * Math.log10(combinedResponse[i]);
-                    const y = gainToY(db, height);
-                    if (i === 0) ctx.moveTo(i, y);
-                    else ctx.lineTo(i, y);
-                }
-            }
-            ctx.stroke();
-            drawControlPoints(width, height);
+            const cR = new Float32Array(w).fill(1);
+            Object.values(filters).forEach(f => { f.getFrequencyResponse(freqs, mR, pR); for (let i = 0; i < w; i++) cR[i] *= mR[i]; });
+            ctx.beginPath(); ctx.strokeStyle = isBypassed ? getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim() : getComputedStyle(document.documentElement).getPropertyValue('--curve-color').trim();
+            ctx.lineWidth = 3;
+            for (let i = 0; i < w; i++) { const y = gainToY(20 * Math.log10(cR[i]), h); if (i === 0) ctx.moveTo(i, y); else ctx.lineTo(i, y); }
+            ctx.stroke(); drawControlPoints(w, h);
         }
 
-        function drawRTA(width, height) {
-            preEqAnalyser.getByteFrequencyData(preRtaDataArray);
-            postEqAnalyser.getByteFrequencyData(postRtaDataArray);
-
-            ctx.lineWidth = 1.5;
-            
-            // Draw Pre-EQ RTA (outline)
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.beginPath();
+        function drawRTA(w, h) {
+            preEqAnalyser.getByteFrequencyData(preRtaDataArray); postEqAnalyser.getByteFrequencyData(postRtaDataArray);
+            ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; ctx.beginPath();
             for (let i = 0; i < preEqAnalyser.frequencyBinCount; i++) {
-                const freq = (i / preEqAnalyser.frequencyBinCount) * (audioContext.sampleRate / 2);
-                const x = freqToX(freq, width);
-                const barHeight = (preRtaDataArray[i] / 255) * height;
-                if (i === 0) {
-                    ctx.moveTo(x, height - barHeight);
-                } else {
-                    ctx.lineTo(x, height - barHeight);
-                }
+                const bh = (preRtaDataArray[i] / 255) * h;
+                const xPos = freqToX((i / preEqAnalyser.frequencyBinCount) * (audioContext.sampleRate / 2), w);
+                if (i === 0) ctx.moveTo(xPos, h - bh);
+                else ctx.lineTo(xPos, h - bh);
             }
-            ctx.stroke();
-
-            // Draw Post-EQ RTA (filled area)
-            ctx.fillStyle = 'rgba(250, 204, 21, 0.2)'; // semi-transparent yellow
-            ctx.beginPath();
-            ctx.moveTo(0, height);
+            ctx.stroke(); ctx.fillStyle = 'rgba(250, 204, 21, 0.1)'; ctx.beginPath(); ctx.moveTo(0, h);
             for (let i = 0; i < postEqAnalyser.frequencyBinCount; i++) {
-                const freq = (i / postEqAnalyser.frequencyBinCount) * (audioContext.sampleRate / 2);
-                const x = freqToX(freq, width);
-                const barHeight = (postRtaDataArray[i] / 255) * height;
-                ctx.lineTo(x, height - barHeight);
+                const bh = (postRtaDataArray[i] / 255) * h;
+                const xPos = freqToX((i / postEqAnalyser.frequencyBinCount) * (audioContext.sampleRate / 2), w);
+                ctx.lineTo(xPos, h - bh);
             }
-            ctx.lineTo(width, height);
-            ctx.closePath();
-            ctx.fill();
+            ctx.lineTo(w, h); ctx.fill();
         }
 
-        function drawGrid(width, height) {
-            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
-            const textColorMuted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted-color').trim();
-            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-
-            ctx.strokeStyle = gridColor;
-            ctx.lineWidth = 1;
-            
-            const freqLines = [50, 100, 200, 500, 1000, 2000, 5000, 10000];
-            ctx.font = '10px Inter';
-            ctx.fillStyle = textColorMuted;
-            freqLines.forEach(freq => {
-                const x = freqToX(freq, width);
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
-                ctx.fillText(`${freq < 1000 ? freq : (freq/1000)+'k'}`, x + 4, height - 10);
+        function drawGrid(w, h) {
+            const gC = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
+            ctx.strokeStyle = gC; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+            [50, 100, 200, 500, 1000, 2000, 5000, 10000].forEach(f => {
+                const x = freqToX(f, w); ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '10px "Gill Sans", sans-serif'; ctx.fillText(`${f < 1000 ? f : (f/1000)+'k'}`, x + 4, h - 10);
             });
-
-            const gainLines = [-20, -10, 0, 10, 20];
-            gainLines.forEach(gain => {
-                const y = gainToY(gain, height);
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
-                if (gain !== 0) {
-                    ctx.fillText(`${gain}dB`, 20, y - 5);
-                }
+            [-12, -6, 0, 6, 12].forEach(g => {
+                const y = gainToY(g, h); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+                if (g !== 0) ctx.fillText(`${g}dB`, 10, y - 5);
             });
-
-            ctx.font = '12px Inter';
-            ctx.fillStyle = textColor;
-            ctx.textAlign = 'center';
-            ctx.fillText('Frequency (Hz)', width / 2, height);
+            ctx.setLineDash([]);
         }
         
-        function drawControlPoints(width, height) {
-            Object.keys(bands).forEach((bandId) => {
-                const filter = filters[bandId];
-                const x = freqToX(filter.frequency.value, width);
-                const y = gainToY(filter.gain.value, height);
-        
-                const radius = (bandId === hoveredBand) ? 12 : 8;
-                const outline = (bandId === hoveredBand) ? '#fff' : '#e5e7eb';
-
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, 2 * Math.PI);
-                const bandColor = getComputedStyle(document.documentElement).getPropertyValue(bands[bandId].color.substring(4, bands[bandId].color.length-1)).trim();
-                const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
-                ctx.fillStyle = isBypassed ? gridColor : bandColor;
-                ctx.fill();
-                ctx.strokeStyle = isBypassed ? '#4b5563' : outline;
-                ctx.lineWidth = 2;
-                ctx.stroke();
+        function drawControlPoints(w, h) {
+            Object.keys(bands).forEach(bid => {
+                const f = filters[bid], x = freqToX(f.frequency.value, w), y = gainToY(f.gain.value, h);
+                ctx.beginPath(); ctx.arc(x, y, bid === hoveredBand ? 12 : 9, 0, 2 * Math.PI);
+                ctx.fillStyle = isBypassed ? '#666' : getComputedStyle(document.documentElement).getPropertyValue(bands[bid].color.substring(4, bands[bid].color.length-1)).trim();
+                ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
             });
-        }
-
-        function freqToX(freq, width) {
-            return width * (Math.log(freq) - MIN_LOG_FREQ) / LOG_RANGE;
-        }
-
-        function xToFreq(x, width) {
-            const logFreq = MIN_LOG_FREQ + (x / width) * LOG_RANGE;
-            return Math.exp(logFreq);
-        }
-
-        function gainToY(gain, height) {
-            const totalDbRange = 48; // +/- 24dB for visual headroom
-            return height * (0.5 - gain / totalDbRange);
-        }
-
-        function yToGain(y, height) {
-            const totalDbRange = 48;
-            return (0.5 - y / height) * totalDbRange;
         }
 
         window.addEventListener('resize', resizeCanvas);
