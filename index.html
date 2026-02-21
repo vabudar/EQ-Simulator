@@ -191,9 +191,11 @@
             <div class="lg:col-span-1 flex flex-col gap-4">
                 <div id="video-container" class="relative bg-black rounded-2xl overflow-hidden aspect-video shadow-inner group cursor-pointer border border-white/5">
                     <video id="media-player" loop crossOrigin="anonymous" class="w-full h-full object-contain" playsinline></video>
-                    <div id="play-icon-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 group-hover:opacity-100 opacity-0 bg-black/40">
+                    <!-- Play/Pause Overlay over Video -->
+                    <div id="play-icon-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 opacity-100 bg-black/40">
                         <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 shadow-2xl">
-                             <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                             <svg id="overlay-play" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                             <svg id="overlay-pause" class="hidden" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                         </div>
                     </div>
                 </div>
@@ -316,6 +318,8 @@
         const challengeSelect = document.getElementById('challenge-select');
         const videoContainer = document.getElementById('video-container');
         const playIconOverlay = document.getElementById('play-icon-overlay');
+        const overlayPlay = document.getElementById('overlay-play');
+        const overlayPause = document.getElementById('overlay-pause');
         const timeSlider = document.getElementById('time-slider');
         const timeProgress = document.getElementById('time-progress');
         const currentTimeDisplay = document.getElementById('current-time');
@@ -329,7 +333,7 @@
         let preEqAnalyser, postEqAnalyser, preRtaDataArray, postRtaDataArray;
         let isPlaying = false, isBypassed = false, isInitialized = false, isRtaOn = false;
         let selectedBand = null, hoveredBand = null, isDragging = false;
-        let lastTap = { time: 0, bandId: null }, initialPinchDistance = null, initialQ = null;
+        let initialPinchDistance = null, initialQ = null;
 
         const bands = {
             lf: { type: 'peaking', color: 'var(--lf-color)', colorRgba: 'rgba(74, 222, 128, 0.2)' },
@@ -479,16 +483,29 @@
 
         function setupMediaControls() {
             videoContainer.addEventListener('click', () => playPauseButton.click());
+            
             mediaPlayer.addEventListener('play', () => { 
-                playIconOverlay.classList.add('opacity-0'); 
+                // Hide overlay normally, but allow it to show on group hover
+                playIconOverlay.classList.remove('opacity-100');
+                playIconOverlay.classList.add('opacity-0', 'group-hover:opacity-100');
+                overlayPlay.classList.add('hidden');
+                overlayPause.classList.remove('hidden');
+                
                 isPlaying = true;
                 updatePlayPauseIcons();
             });
+            
             mediaPlayer.addEventListener('pause', () => { 
-                playIconOverlay.classList.remove('opacity-0'); 
+                // Always show overlay when paused
+                playIconOverlay.classList.remove('opacity-0', 'group-hover:opacity-100');
+                playIconOverlay.classList.add('opacity-100');
+                overlayPlay.classList.remove('hidden');
+                overlayPause.classList.add('hidden');
+                
                 isPlaying = false;
                 updatePlayPauseIcons();
             });
+            
             mediaPlayer.addEventListener('canplay', () => enablePlaybackControls(true, false));
             mediaPlayer.addEventListener('progress', () => {
                 if (mediaPlayer.duration > 0) {
@@ -559,6 +576,11 @@
         const freqToSlider = f => f <= 0 ? 0 : 1000 * (Math.log(f) - MIN_LOG_FREQ) / LOG_RANGE;
 
         function setupCanvasInteraction() {
+            let lastDown = { time: 0, band: null };
+            let isDoubleDown = false;
+            let hasMoved = false;
+            let startPos = { x: 0, y: 0 };
+
             const getClosest = (x, y) => {
                 let closest = null, minDist = Infinity;
                 Object.keys(bands).forEach(bid => {
@@ -572,19 +594,31 @@
 
             const handleDown = (x, y) => {
                 const bid = getClosest(x, y);
+                hasMoved = false;
+                startPos = { x, y };
                 const now = Date.now();
-                if (bid && bid === lastTap.bandId && (now - lastTap.time) < 300) {
-                    document.getElementById(`gain-${bid}`).value = initialDefaults[bid].gain;
-                    updateFilterFromSlider(bid);
-                    selectedBand = null; isDragging = false; return;
+                
+                // If clicked twice quickly on the same band, flag it as a double-click
+                if (bid && bid === lastDown.band && (now - lastDown.time) < 300) {
+                    isDoubleDown = true;
+                    selectedBand = bid;
+                    isDragging = true;
+                } else {
+                    isDoubleDown = false;
+                    lastDown = { time: now, band: bid };
+                    if (bid) { selectedBand = bid; isDragging = true; }
                 }
-                lastTap = { time: now, bandId: bid };
-                if (bid) { selectedBand = bid; isDragging = true; }
             };
 
             const handleMove = (x, y) => {
                 hoveredBand = getClosest(x, y);
                 if (!isDragging || !selectedBand) return;
+                
+                // Add a small 3px deadzone to differentiate accidental wiggles from intentional dragging
+                if (Math.hypot(x - startPos.x, y - startPos.y) > 3) {
+                    hasMoved = true;
+                }
+                
                 const nf = xToFreq(x, canvas.clientWidth);
                 const ng = yToGain(y, canvas.clientHeight);
                 document.getElementById(`freq-${selectedBand}`).value = freqToSlider(Math.max(MIN_FREQ, Math.min(MAX_FREQ, nf)));
@@ -592,25 +626,79 @@
                 updateFilterFromSlider(selectedBand);
             };
 
+            const handleUp = () => {
+                // If it was a double click AND the user didn't drag it, treat as a reset
+                if (isDoubleDown && !hasMoved && selectedBand) {
+                    document.getElementById(`gain-${selectedBand}`).value = initialDefaults[selectedBand].gain;
+                    updateFilterFromSlider(selectedBand);
+                }
+                isDragging = false;
+                selectedBand = null;
+                isDoubleDown = false;
+            };
+
             canvas.addEventListener('mousedown', e => { const r = canvas.getBoundingClientRect(); handleDown(e.clientX - r.left, e.clientY - r.top); });
             canvas.addEventListener('mousemove', e => { const r = canvas.getBoundingClientRect(); handleMove(e.clientX - r.left, e.clientY - r.top); });
-            canvas.addEventListener('mouseleave', () => { hoveredBand = null; isDragging = false; });
-            canvas.addEventListener('mouseup', () => { isDragging = false; selectedBand = null; });
+            canvas.addEventListener('mouseleave', () => { hoveredBand = null; handleUp(); });
+            canvas.addEventListener('mouseup', handleUp);
             
+            // Handles laptop trackpad pinch (and standard scroll)
             canvas.addEventListener('wheel', e => {
-                if (!isDragging || !selectedBand) return;
+                const targetBand = isDragging ? selectedBand : hoveredBand;
+                if (!targetBand) return;
                 e.preventDefault(); 
-                const qS = document.getElementById(`q-${selectedBand}`);
+                
+                hasMoved = true; // Register the pinch so releasing the double-click doesn't reset gain to 0
+                
+                const qS = document.getElementById(`q-${targetBand}`);
                 let cQ = parseFloat(qS.value);
-                cQ *= Math.pow(1.1, e.deltaY * -0.01);
+                
+                // e.ctrlKey is commonly true for trackpad pinch events on modern browsers.
+                // deltaY logic: Pinching Out generally yields negative deltaY, Pinching In yields positive.
+                let sensitivity = e.ctrlKey ? 0.05 : 0.01;
+                cQ *= Math.pow(1.1, e.deltaY * sensitivity);
+                
                 qS.value = Math.max(0.1, Math.min(10, cQ));
-                updateFilterFromSlider(selectedBand);
+                updateFilterFromSlider(targetBand);
             }, { passive: false });
+            
+            // Specific Mac Safari Trackpad Gestures (for comprehensive support)
+            let initialGestureQ = null;
+            canvas.addEventListener('gesturestart', e => {
+                e.preventDefault();
+                const targetBand = isDragging ? selectedBand : hoveredBand;
+                if (targetBand) {
+                    initialGestureQ = parseFloat(document.getElementById(`q-${targetBand}`).value);
+                }
+            });
+            canvas.addEventListener('gesturechange', e => {
+                e.preventDefault();
+                const targetBand = isDragging ? selectedBand : hoveredBand;
+                if (targetBand && initialGestureQ !== null) {
+                    hasMoved = true; // Register the pinch so releasing the double-click doesn't reset gain to 0
+                    const qS = document.getElementById(`q-${targetBand}`);
+                    // scale > 1 (pinch out/wider) -> lower Q
+                    let newQ = initialGestureQ / e.scale;
+                    qS.value = Math.max(0.1, Math.min(10, newQ));
+                    updateFilterFromSlider(targetBand);
+                }
+            });
+            canvas.addEventListener('gestureend', e => {
+                e.preventDefault();
+                initialGestureQ = null;
+            });
 
-            canvas.addEventListener('touchstart', e => { e.preventDefault(); const r = canvas.getBoundingClientRect(); handleDown(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top); });
+            // Handles mobile touchscreen interactions
+            canvas.addEventListener('touchstart', e => { 
+                e.preventDefault(); 
+                const r = canvas.getBoundingClientRect(); 
+                handleDown(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
+            });
+
             canvas.addEventListener('touchmove', e => {
                 e.preventDefault();
                 if (e.touches.length === 2 && selectedBand) {
+                    hasMoved = true; // Register the pinch so releasing the double-click doesn't reset gain to 0
                     const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                     if (initialPinchDistance === null) { initialPinchDistance = dist; initialQ = parseFloat(document.getElementById(`q-${selectedBand}`).value); }
                     document.getElementById(`q-${selectedBand}`).value = Math.max(0.1, Math.min(10, initialQ / (dist / initialPinchDistance)));
@@ -619,7 +707,7 @@
                     const r = canvas.getBoundingClientRect(); handleMove(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
                 }
             });
-            canvas.addEventListener('touchend', () => { initialPinchDistance = null; isDragging = false; selectedBand = null; });
+            canvas.addEventListener('touchend', () => { initialPinchDistance = null; handleUp(); });
         }
 
         function resizeCanvas() {
@@ -718,4 +806,3 @@
     </script>
 </body>
 </html>
-
