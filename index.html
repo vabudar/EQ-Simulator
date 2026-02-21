@@ -119,6 +119,55 @@
             margin-right: 8px;
             box-shadow: 0 0 8px currentColor; /* Glow restored */
         }
+
+        /* SVG Icon Animations */
+        .rta-bar {
+            transform-box: view-box;
+            transform-origin: 50% 20px;
+            transform: scaleY(0.15);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #rta-button:hover .rta-bar,
+        #rta-button.is-active .rta-bar {
+            transform: scaleY(1);
+        }
+        #rta-button:hover .bar-1, #rta-button.is-active .bar-1 { transition-delay: 0.0s; }
+        #rta-button:hover .bar-2, #rta-button.is-active .bar-2 { transition-delay: 0.05s; }
+        #rta-button:hover .bar-3, #rta-button.is-active .bar-3 { transition-delay: 0.1s; }
+        #rta-button:hover .bar-4, #rta-button.is-active .bar-4 { transition-delay: 0.15s; }
+        #rta-button:hover .bar-5, #rta-button.is-active .bar-5 { transition-delay: 0.2s; }
+
+        #bypass-path-base {
+            transition: stroke 0.3s ease;
+        }
+        #bypass-path-wipe {
+            -webkit-clip-path: inset(0 100% 0 0);
+            clip-path: inset(0 100% 0 0);
+            transition: -webkit-clip-path 0.4s cubic-bezier(0.4, 0, 0.2, 1), clip-path 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Not Bypassed (EQ ON) - Yellow */
+        #bypass-button:not(.is-active) #bypass-path-base { stroke: #facc15; }
+        #bypass-button:not(.is-active) #bypass-path-wipe { stroke: #6b7280; }
+        
+        /* Bypassed (EQ OFF) - Grey */
+        #bypass-button.is-active #bypass-path-base { stroke: #6b7280; }
+        #bypass-button.is-active #bypass-path-wipe { stroke: #facc15; }
+
+        /* Wipe effect on hover */
+        #bypass-button:hover #bypass-path-wipe {
+            -webkit-clip-path: inset(0 0 0 0);
+            clip-path: inset(0 0 0 0);
+        }
+
+        #reset-path {
+            transform-box: view-box;
+            transform-origin: 50% 12px;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #reset-button:hover #reset-path {
+            transform: scaleY(0.01); /* Flattens to zero */
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 lg:p-8">
@@ -148,39 +197,49 @@
                 <div class="w-px h-6 bg-white/10"></div>
 
                 <input type="file" id="media-upload" class="hidden" accept="audio/*,video/*">
-                <label for="media-upload" class="btn-audio bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold py-1.5 px-4 rounded-xl cursor-pointer text-[10px] tracking-widest border border-blue-500/30 uppercase">Import</label>
+                <label for="media-upload" class="btn-audio bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold py-1.5 px-4 rounded-xl cursor-pointer text-[10px] tracking-widest border border-blue-500/30 uppercase flex items-center gap-2 group">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:-translate-y-1">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    Import
+                </label>
                 
-                <button id="play-pause-button" title="Play/Pause" class="btn-audio bg-green-500/20 hover:bg-green-500/40 text-green-400 p-2 rounded-xl border border-green-500/30 w-12 h-10 flex items-center justify-center relative">
+                <button id="play-pause-button" title="Play/Pause" class="btn-audio bg-green-500/20 hover:bg-green-500/40 text-green-400 p-2 rounded-xl border border-green-500/30 w-12 h-10 flex items-center justify-center relative group">
                     <div id="progress-bar-container" class="absolute inset-0 bg-white/5 hidden pointer-events-none">
                         <div id="progress-bar" class="h-full bg-green-500/20 w-0"></div>
                     </div>
-                    <span id="play-pause-text" class="z-10">
+                    <span id="play-pause-text" class="z-10 transition-transform duration-300 group-hover:scale-110">
                         <svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                         <svg id="pause-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     </span>
                 </button>
 
-                <button id="bypass-button" title="Toggle Bypass" class="btn-audio bg-gray-500/10 p-2 rounded-xl border border-white/10 w-12 h-10 flex items-center justify-center transition-colors">
+                <button id="bypass-button" title="Toggle Bypass" class="btn-audio bg-yellow-500/10 p-2 rounded-xl border border-white/10 w-12 h-10 flex items-center justify-center transition-colors">
                     <svg id="bypass-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path id="bypass-path" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke="#6b7280" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <path id="bypass-path-base" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <path id="bypass-path-wipe" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </button>
                 
                 <button id="rta-button" title="Toggle RTA" class="btn-audio bg-teal-500/20 hover:bg-teal-500/40 text-teal-400 p-2 rounded-xl border border-teal-500/30 w-12 h-10 flex items-center justify-center">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="2" y="16" width="3" height="4" rx="0.5" />
-                        <rect x="6.5" y="8" width="3" height="12" rx="0.5" />
-                        <rect x="11" y="4" width="3" height="16" rx="0.5" />
-                        <rect x="15.5" y="11" width="3" height="9" rx="0.5" />
-                        <rect x="20" y="17" width="3" height="3" rx="0.5" />
+                        <rect class="rta-bar bar-1" x="2" y="16" width="3" height="4" rx="0.5" />
+                        <rect class="rta-bar bar-2" x="6.5" y="8" width="3" height="12" rx="0.5" />
+                        <rect class="rta-bar bar-3" x="11" y="4" width="3" height="16" rx="0.5" />
+                        <rect class="rta-bar bar-4" x="15.5" y="11" width="3" height="9" rx="0.5" />
+                        <rect class="rta-bar bar-5" x="20" y="17" width="3" height="3" rx="0.5" />
                     </svg>
                 </button>
 
-                <!-- Reset Button updated with a circular arrow icon -->
+                <!-- Reset Button updated with matching parametric curve -->
                 <button id="reset-button" title="Reset Filters" class="btn-audio bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-xl border border-red-500/30 w-12 h-10 flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Flat reference line -->
+                        <line x1="2" y1="12" x2="22" y2="12" stroke-width="1.5" opacity="0.3" />
+                        <!-- Parametric curve mimicking user image (Dip -> High Peak -> Low Dip -> End) -->
+                        <path id="reset-path" d="M 2 12 C 3 12, 4 16, 6 16 C 8 16, 9 6, 11 6 C 13 6, 14 18, 16 18 C 19 18, 20 14, 22 14" stroke-width="2.5" />
                     </svg>
                 </button>
             </div>
@@ -200,12 +259,12 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3 bg-black/20 p-4 rounded-2xl border border-white/5">
-                    <span id="current-time" class="font-mono text-xs opacity-60">00:00</span>
+                    <span id="current-time" class="text-xs opacity-60 tabular-nums font-medium">00:00</span>
                     <div class="flex-1 h-1 bg-white/10 rounded-full relative overflow-hidden cursor-pointer group">
                         <input type="range" id="time-slider" class="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer" value="0" step="0.1">
                         <div id="time-progress" class="absolute top-0 left-0 h-full bg-white/40 group-hover:bg-white/60 transition-colors" style="width: 0%"></div>
                     </div>
-                    <span id="duration" class="font-mono text-xs opacity-60">00:00</span>
+                    <span id="duration" class="text-xs opacity-60 tabular-nums font-medium">00:00</span>
                 </div>
             </div>
 
@@ -308,7 +367,6 @@
         const startButton = document.getElementById('start-button');
         const playPauseButton = document.getElementById('play-pause-button');
         const bypassButton = document.getElementById('bypass-button');
-        const bypassPath = document.getElementById('bypass-path');
         const resetButton = document.getElementById('reset-button');
         const rtaButton = document.getElementById('rta-button');
         const mediaPlayer = document.getElementById('media-player');
@@ -334,6 +392,7 @@
         let isPlaying = false, isBypassed = false, isInitialized = false, isRtaOn = false;
         let selectedBand = null, hoveredBand = null, isDragging = false;
         let initialPinchDistance = null, initialQ = null;
+        let currentMediaKey = 0; // Tracks which clip or 'custom' file is active
 
         const bands = {
             lf: { type: 'peaking', color: 'var(--lf-color)', colorRgba: 'rgba(74, 222, 128, 0.2)' },
@@ -422,12 +481,11 @@
         }
 
         function updateBypassIcon() {
+            bypassButton.classList.toggle('is-active', isBypassed);
             if (isBypassed) {
-                bypassPath.setAttribute('stroke', '#facc15'); 
-                bypassButton.classList.replace('bg-gray-500/10', 'bg-yellow-500/10');
-            } else {
-                bypassPath.setAttribute('stroke', '#6b7280'); 
                 bypassButton.classList.replace('bg-yellow-500/10', 'bg-gray-500/10');
+            } else {
+                bypassButton.classList.replace('bg-gray-500/10', 'bg-yellow-500/10');
             }
         }
 
@@ -443,15 +501,18 @@
         }
         
         function setupChallenges() {
-            challenges.forEach(c => {
+            challenges.forEach((c, index) => {
                 const opt = document.createElement('option');
-                opt.value = c.url; opt.textContent = c.name;
+                opt.value = index; 
+                opt.textContent = c.name;
                 challengeSelect.appendChild(opt);
             });
             mediaPlayer.src = challenges[0].url;
             challengeSelect.addEventListener('change', e => {
+                const index = parseInt(e.target.value);
+                currentMediaKey = index;
                 if (isPlaying) mediaPlayer.pause();
-                mediaPlayer.src = e.target.value;
+                mediaPlayer.src = challenges[index].url;
                 mediaPlayer.load();
                 enablePlaybackControls(false, true);
             });
@@ -472,6 +533,7 @@
             mediaUploadInput.addEventListener('change', e => {
                 const file = e.target.files[0];
                 if (!file) return;
+                currentMediaKey = 'custom';
                 if (isPlaying) mediaPlayer.pause();
                 mediaPlayer.src = URL.createObjectURL(file);
                 mediaPlayer.load();
@@ -560,6 +622,7 @@
             rtaButton.classList.toggle('bg-teal-500/20'); 
             rtaButton.classList.toggle('bg-teal-500/50');
             rtaButton.classList.toggle('text-white');
+            rtaButton.classList.toggle('is-active', isRtaOn);
         });
 
         function applyEqPreset(sets) {
