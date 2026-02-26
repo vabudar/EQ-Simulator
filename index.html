@@ -98,7 +98,7 @@
         .btn-audio {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            overflow: hidden;
+            overflow: visible; /* Allow tooltips to pop out */
             border: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -168,6 +168,10 @@
         #reset-button:hover #reset-path {
             transform: scaleY(0.01); /* Flattens to zero */
         }
+        
+        #btn-morph-path, #overlay-morph-path {
+            transition: d 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 lg:p-8">
@@ -176,19 +180,40 @@
         <h1 class="text-7xl mb-2 text-white drop-shadow-lg">EQ SIMULATOR</h1>
         <div class="h-1 w-24 bg-white mx-auto mb-6 opacity-50"></div>
         <p class="mb-10 text-gray-200 text-xl font-light tracking-wide">Simulate how different frequencies affect sound output</p>
+        
         <button id="start-button" class="btn-audio bg-white text-[#516361] font-bold py-4 px-16 rounded-full shadow-2xl hover:shadow-white/10 text-xl tracking-widest">
             START ENGINE
         </button>
+
+        <!-- Headphones Recommendation Badge -->
+        <div class="mt-12 flex items-center justify-center gap-3 text-white/80 bg-black/20 py-3 px-6 rounded-2xl w-max mx-auto border border-white/10 backdrop-blur-sm shadow-xl">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+            </svg>
+            <span class="text-xs tracking-[0.2em] uppercase font-bold">Best Experienced With Headphones</span>
+        </div>
     </div>
 
     <div id="main-app" class="hidden w-full max-w-6xl mx-auto glass-panel rounded-3xl p-4 sm:p-6 lg:p-8">
         <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6 relative z-20">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
                 </div>
-                <h1 class="text-2xl text-white font-bold tracking-[0.2em]">PARAMETRIC EQ <span class="font-light opacity-40 ml-2">V2.0</span></h1>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl text-white font-bold tracking-[0.2em]">PARAMETRIC EQ <span class="font-light opacity-40 ml-2">V2.0</span></h1>
+                    
+                    <!-- Subtle Headphone Icon near Title -->
+                    <div class="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-white/5 border border-white/10 relative group cursor-help">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white/50 group-hover:text-white/90 transition-colors">
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                        </svg>
+                        <div class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">Best with headphones</div>
+                    </div>
+                </div>
             </div>
             
             <div class="flex items-center gap-3 bg-black/20 p-2 rounded-2xl border border-white/5">
@@ -196,34 +221,54 @@
                 
                 <div class="w-px h-6 bg-white/10"></div>
 
+                <!-- Import Button -->
                 <input type="file" id="media-upload" class="hidden" accept="audio/*,video/*">
-                <label for="media-upload" class="btn-audio bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold py-1.5 px-4 rounded-xl cursor-pointer text-[10px] tracking-widest border border-blue-500/30 uppercase flex items-center gap-2 group">
+                <label for="media-upload" class="btn-audio bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold py-1.5 px-4 rounded-xl cursor-pointer text-[10px] tracking-widest border border-blue-500/30 uppercase flex items-center gap-2 group relative">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:-translate-y-1">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
                     Import
+                    
+                    <!-- Tooltip -->
+                    <div class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
+                        Load Custom Media
+                    </div>
                 </label>
                 
-                <button id="play-pause-button" title="Play/Pause" class="btn-audio bg-green-500/20 hover:bg-green-500/40 text-green-400 p-2 rounded-xl border border-green-500/30 w-12 h-10 flex items-center justify-center relative group">
-                    <div id="progress-bar-container" class="absolute inset-0 bg-white/5 hidden pointer-events-none">
+                <!-- Play/Pause Button -->
+                <button id="play-pause-button" class="btn-audio bg-green-500/20 hover:bg-green-500/40 text-green-400 p-2 rounded-xl border border-green-500/30 w-12 h-10 flex items-center justify-center relative group">
+                    <div id="progress-bar-container" class="absolute inset-0 bg-white/5 hidden pointer-events-none overflow-hidden rounded-xl">
                         <div id="progress-bar" class="h-full bg-green-500/20 w-0"></div>
                     </div>
                     <span id="play-pause-text" class="z-10 transition-transform duration-300 group-hover:scale-110">
-                        <svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        <svg id="pause-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path id="btn-morph-path" d="M 8 5 L 13.5 8.5 L 13.5 15.5 L 8 19 Z M 13.5 8.5 L 19 12 L 19 12 L 13.5 15.5 Z"/>
+                        </svg>
                     </span>
+                    
+                    <!-- Tooltip -->
+                    <div class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
+                        Play/Pause
+                    </div>
                 </button>
 
-                <button id="bypass-button" title="Toggle Bypass" class="btn-audio bg-yellow-500/10 p-2 rounded-xl border border-white/10 w-12 h-10 flex items-center justify-center transition-colors">
+                <!-- Bypass Button -->
+                <button id="bypass-button" class="btn-audio bg-yellow-500/10 hover:bg-yellow-500/20 p-2 rounded-xl border border-white/10 w-12 h-10 flex items-center justify-center transition-colors relative group">
                     <svg id="bypass-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path id="bypass-path-base" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                         <path id="bypass-path-wipe" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
+
+                    <!-- Tooltip -->
+                    <div class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
+                        Bypass EQ changes
+                    </div>
                 </button>
                 
-                <button id="rta-button" title="Toggle RTA" class="btn-audio bg-teal-500/20 hover:bg-teal-500/40 text-teal-400 p-2 rounded-xl border border-teal-500/30 w-12 h-10 flex items-center justify-center">
+                <!-- RTA Button -->
+                <button id="rta-button" class="btn-audio bg-teal-500/20 hover:bg-teal-500/40 text-teal-400 p-2 rounded-xl border border-teal-500/30 w-12 h-10 flex items-center justify-center relative group">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <rect class="rta-bar bar-1" x="2" y="16" width="3" height="4" rx="0.5" />
                         <rect class="rta-bar bar-2" x="6.5" y="8" width="3" height="12" rx="0.5" />
@@ -231,30 +276,41 @@
                         <rect class="rta-bar bar-4" x="15.5" y="11" width="3" height="9" rx="0.5" />
                         <rect class="rta-bar bar-5" x="20" y="17" width="3" height="3" rx="0.5" />
                     </svg>
+
+                    <!-- Tooltip (Right Aligned to avoid off-screen) -->
+                    <div class="absolute top-full mt-3 right-0 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
+                        Toggle RTA
+                    </div>
                 </button>
 
                 <!-- Reset Button updated with matching parametric curve -->
-                <button id="reset-button" title="Reset Filters" class="btn-audio bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-xl border border-red-500/30 w-12 h-10 flex items-center justify-center">
+                <button id="reset-button" class="btn-audio bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-xl border border-red-500/30 w-12 h-10 flex items-center justify-center relative group">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                         <!-- Flat reference line -->
                         <line x1="2" y1="12" x2="22" y2="12" stroke-width="1.5" opacity="0.3" />
                         <!-- Parametric curve mimicking user image (Dip -> High Peak -> Low Dip -> End) -->
                         <path id="reset-path" d="M 2 12 C 3 12, 4 16, 6 16 C 8 16, 9 6, 11 6 C 13 6, 14 18, 16 18 C 19 18, 20 14, 22 14" stroke-width="2.5" />
                     </svg>
+
+                    <!-- Tooltip (Right Aligned to avoid off-screen) -->
+                    <div class="absolute top-full mt-3 right-0 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
+                        Reset Curve
+                    </div>
                 </button>
             </div>
         </div>
 
         <!-- Main Display -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 relative z-10">
             <div class="lg:col-span-1 flex flex-col gap-4">
                 <div id="video-container" class="relative bg-black rounded-2xl overflow-hidden aspect-video shadow-inner group cursor-pointer border border-white/5">
                     <video id="media-player" loop crossOrigin="anonymous" class="w-full h-full object-contain" playsinline></video>
                     <!-- Play/Pause Overlay over Video -->
-                    <div id="play-icon-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 opacity-100 bg-black/40">
-                        <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 shadow-2xl">
-                             <svg id="overlay-play" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-                             <svg id="overlay-pause" class="hidden" width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <div id="play-icon-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-500 opacity-100 bg-black/40 backdrop-blur-[2px]">
+                        <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 shadow-2xl transition-transform duration-500 transform scale-100 group-hover:scale-110">
+                             <svg width="36" height="36" viewBox="0 0 24 24" fill="white">
+                                  <path id="overlay-morph-path" d="M 8 5 L 13.5 8.5 L 13.5 15.5 L 8 19 Z M 13.5 8.5 L 19 12 L 19 12 L 13.5 15.5 Z"/>
+                             </svg>
                         </div>
                     </div>
                 </div>
@@ -277,7 +333,7 @@
         </div>
 
         <!-- Band Controls -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
             <div class="glass-panel p-5 rounded-2xl group border-l-4" style="border-left-color: var(--lf-color);">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xs uppercase font-black tracking-[0.2em] opacity-80" style="color: var(--lf-color);"><span class="status-light" style="background-color: var(--lf-color);"></span>Low Freq</h2>
@@ -376,16 +432,12 @@
         const challengeSelect = document.getElementById('challenge-select');
         const videoContainer = document.getElementById('video-container');
         const playIconOverlay = document.getElementById('play-icon-overlay');
-        const overlayPlay = document.getElementById('overlay-play');
-        const overlayPause = document.getElementById('overlay-pause');
         const timeSlider = document.getElementById('time-slider');
         const timeProgress = document.getElementById('time-progress');
         const currentTimeDisplay = document.getElementById('current-time');
         const durationDisplay = document.getElementById('duration');
         const progressBarContainer = document.getElementById('progress-bar-container');
         const progressBar = document.getElementById('progress-bar');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
 
         let audioContext, sourceNode, filters = {}, processedGainNode, bypassGainNode;
         let preEqAnalyser, postEqAnalyser, preRtaDataArray, postRtaDataArray;
@@ -471,13 +523,12 @@
         }
 
         function updatePlayPauseIcons() {
-            if (isPlaying) {
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
-            } else {
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
-            }
+            const playD = "M 8 5 L 13.5 8.5 L 13.5 15.5 L 8 19 Z M 13.5 8.5 L 19 12 L 19 12 L 13.5 15.5 Z";
+            const pauseD = "M 6 5 L 10 5 L 10 19 L 6 19 Z M 14 5 L 18 5 L 18 19 L 14 19 Z";
+            const pathD = isPlaying ? pauseD : playD;
+            
+            document.getElementById('btn-morph-path').setAttribute('d', pathD);
+            document.getElementById('overlay-morph-path').setAttribute('d', pathD);
         }
 
         function updateBypassIcon() {
@@ -548,10 +599,8 @@
             
             mediaPlayer.addEventListener('play', () => { 
                 // Hide overlay normally, but allow it to show on group hover
-                playIconOverlay.classList.remove('opacity-100');
+                playIconOverlay.classList.remove('opacity-100', 'bg-black/40', 'backdrop-blur-[2px]');
                 playIconOverlay.classList.add('opacity-0', 'group-hover:opacity-100');
-                overlayPlay.classList.add('hidden');
-                overlayPause.classList.remove('hidden');
                 
                 isPlaying = true;
                 updatePlayPauseIcons();
@@ -560,9 +609,7 @@
             mediaPlayer.addEventListener('pause', () => { 
                 // Always show overlay when paused
                 playIconOverlay.classList.remove('opacity-0', 'group-hover:opacity-100');
-                playIconOverlay.classList.add('opacity-100');
-                overlayPlay.classList.remove('hidden');
-                overlayPause.classList.add('hidden');
+                playIconOverlay.classList.add('opacity-100', 'bg-black/40', 'backdrop-blur-[2px]');
                 
                 isPlaying = false;
                 updatePlayPauseIcons();
