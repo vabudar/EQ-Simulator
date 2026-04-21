@@ -7,11 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Using Cabin as a high-quality web-safe fallback that mirrors Gill Sans proportions -->
     <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Palette derived from user image */
             --bg-color: #516361; 
             --panel-color: rgba(45, 56, 55, 0.85);
             --inner-bg: #2d3837;
@@ -29,7 +27,6 @@
         }
         
         body {
-            /* Gill Sans font stack */
             font-family: "Gill Sans", "Gill Sans MT", "Cabin", Calibri, "Trebuchet MS", sans-serif;
             background-color: var(--bg-color);
             background-image: radial-gradient(circle at top left, rgba(255,255,255,0.05) 0%, transparent 40%);
@@ -44,7 +41,6 @@
             letter-spacing: 0.05em;
         }
 
-        /* Glassmorphism containers with subtle depth */
         .glass-panel {
             background: var(--panel-color);
             backdrop-filter: blur(12px);
@@ -53,7 +49,6 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
-        /* Pro Audio Slider Styling */
         .control-knob {
             -webkit-appearance: none;
             width: 100%;
@@ -98,7 +93,7 @@
         .btn-audio {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            overflow: visible; /* Allow tooltips to pop out */
+            overflow: visible; 
             border: 1px solid rgba(255,255,255,0.1);
         }
 
@@ -117,10 +112,9 @@
             border-radius: 50%;
             display: inline-block;
             margin-right: 8px;
-            box-shadow: 0 0 8px currentColor; /* Glow restored */
+            box-shadow: 0 0 8px currentColor;
         }
 
-        /* SVG Icon Animations */
         .rta-bar {
             transform-box: view-box;
             transform-origin: 50% 20px;
@@ -137,24 +131,18 @@
         #rta-button:hover .bar-4, #rta-button.is-active .bar-4 { transition-delay: 0.15s; }
         #rta-button:hover .bar-5, #rta-button.is-active .bar-5 { transition-delay: 0.2s; }
 
-        #bypass-path-base {
-            transition: stroke 0.3s ease;
-        }
+        #bypass-path-base { transition: stroke 0.3s ease; }
         #bypass-path-wipe {
             -webkit-clip-path: inset(0 100% 0 0);
             clip-path: inset(0 100% 0 0);
             transition: -webkit-clip-path 0.4s cubic-bezier(0.4, 0, 0.2, 1), clip-path 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        /* Not Bypassed (EQ ON) - Yellow */
         #bypass-button:not(.is-active) #bypass-path-base { stroke: #facc15; }
         #bypass-button:not(.is-active) #bypass-path-wipe { stroke: #6b7280; }
-        
-        /* Bypassed (EQ OFF) - Grey */
         #bypass-button.is-active #bypass-path-base { stroke: #6b7280; }
         #bypass-button.is-active #bypass-path-wipe { stroke: #facc15; }
 
-        /* Wipe effect on hover */
         #bypass-button:hover #bypass-path-wipe {
             -webkit-clip-path: inset(0 0 0 0);
             clip-path: inset(0 0 0 0);
@@ -166,7 +154,7 @@
             transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         #reset-button:hover #reset-path {
-            transform: scaleY(0.01); /* Flattens to zero */
+            transform: scaleY(0.01); 
         }
         
         #btn-morph-path, #overlay-morph-path {
@@ -185,7 +173,6 @@
             START ENGINE
         </button>
 
-        <!-- Headphones Recommendation Badge -->
         <div class="mt-12 flex items-center justify-center gap-3 text-white/80 bg-black/20 py-3 px-6 rounded-2xl w-max mx-auto border border-white/10 backdrop-blur-sm shadow-xl">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
@@ -196,7 +183,6 @@
     </div>
 
     <div id="main-app" class="hidden w-full max-w-6xl mx-auto glass-panel rounded-3xl p-4 sm:p-6 lg:p-8">
-        <!-- Header Section -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6 relative z-20">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
@@ -205,7 +191,6 @@
                 <div class="flex items-center gap-3">
                     <h1 class="text-2xl text-white font-bold tracking-[0.2em]">PARAMETRIC EQ <span class="font-light opacity-40 ml-2">V2.0</span></h1>
                     
-                    <!-- Subtle Headphone Icon near Title -->
                     <div class="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-white/5 border border-white/10 relative group cursor-help">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white/50 group-hover:text-white/90 transition-colors">
                             <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
@@ -221,7 +206,6 @@
                 
                 <div class="w-px h-6 bg-white/10"></div>
 
-                <!-- Import Button -->
                 <input type="file" id="media-upload" class="hidden" accept="audio/*,video/*">
                 <label for="media-upload" class="btn-audio bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold py-1.5 px-4 rounded-xl cursor-pointer text-[10px] tracking-widest border border-blue-500/30 uppercase flex items-center gap-2 group relative">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:-translate-y-1">
@@ -231,13 +215,11 @@
                     </svg>
                     Import
                     
-                    <!-- Tooltip -->
                     <div class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
                         Load Custom Media
                     </div>
                 </label>
                 
-                <!-- Play/Pause Button -->
                 <button id="play-pause-button" class="btn-audio bg-green-500/20 hover:bg-green-500/40 text-green-400 p-2 rounded-xl border border-green-500/30 w-12 h-10 flex items-center justify-center relative group">
                     <div id="progress-bar-container" class="absolute inset-0 bg-white/5 hidden pointer-events-none overflow-hidden rounded-xl">
                         <div id="progress-bar" class="h-full bg-green-500/20 w-0"></div>
@@ -248,26 +230,22 @@
                         </svg>
                     </span>
                     
-                    <!-- Tooltip -->
                     <div class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
                         Play/Pause
                     </div>
                 </button>
 
-                <!-- Bypass Button -->
                 <button id="bypass-button" class="btn-audio bg-yellow-500/10 hover:bg-yellow-500/20 p-2 rounded-xl border border-white/10 w-12 h-10 flex items-center justify-center transition-colors relative group">
                     <svg id="bypass-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <path id="bypass-path-base" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                         <path id="bypass-path-wipe" d="M2 12C5 4 9 4 12 12C15 20 19 20 22 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
 
-                    <!-- Tooltip -->
                     <div class="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
                         Bypass EQ changes
                     </div>
                 </button>
                 
-                <!-- RTA Button -->
                 <button id="rta-button" class="btn-audio bg-teal-500/20 hover:bg-teal-500/40 text-teal-400 p-2 rounded-xl border border-teal-500/30 w-12 h-10 flex items-center justify-center relative group">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <rect class="rta-bar bar-1" x="2" y="16" width="3" height="4" rx="0.5" />
@@ -277,22 +255,17 @@
                         <rect class="rta-bar bar-5" x="20" y="17" width="3" height="3" rx="0.5" />
                     </svg>
 
-                    <!-- Tooltip (Right Aligned to avoid off-screen) -->
                     <div class="absolute top-full mt-3 right-0 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
                         Toggle RTA
                     </div>
                 </button>
 
-                <!-- Reset Button updated with matching parametric curve -->
                 <button id="reset-button" class="btn-audio bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-xl border border-red-500/30 w-12 h-10 flex items-center justify-center relative group">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                        <!-- Flat reference line -->
                         <line x1="2" y1="12" x2="22" y2="12" stroke-width="1.5" opacity="0.3" />
-                        <!-- Parametric curve mimicking user image (Dip -> High Peak -> Low Dip -> End) -->
                         <path id="reset-path" d="M 2 12 C 3 12, 4 16, 6 16 C 8 16, 9 6, 11 6 C 13 6, 14 18, 16 18 C 19 18, 20 14, 22 14" stroke-width="2.5" />
                     </svg>
 
-                    <!-- Tooltip (Right Aligned to avoid off-screen) -->
                     <div class="absolute top-full mt-3 right-0 w-max px-3 py-1.5 bg-[#2d3837] text-white text-[10px] uppercase font-bold tracking-widest rounded-lg shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 pointer-events-none border border-white/10 z-50">
                         Reset Curve
                     </div>
@@ -300,12 +273,10 @@
             </div>
         </div>
 
-        <!-- Main Display -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 relative z-10">
             <div class="lg:col-span-1 flex flex-col gap-4">
                 <div id="video-container" class="relative bg-black rounded-2xl overflow-hidden aspect-video shadow-inner group cursor-pointer border border-white/5">
                     <video id="media-player" loop crossOrigin="anonymous" class="w-full h-full object-contain" playsinline></video>
-                    <!-- Play/Pause Overlay over Video -->
                     <div id="play-icon-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-500 opacity-100 bg-black/40 backdrop-blur-[2px]">
                         <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 shadow-2xl transition-transform duration-500 transform scale-100 group-hover:scale-110">
                              <svg width="36" height="36" viewBox="0 0 24 24" fill="white">
@@ -314,13 +285,28 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Media Transport and Volume Controls -->
                 <div class="flex items-center gap-3 bg-black/20 p-4 rounded-2xl border border-white/5">
-                    <span id="current-time" class="text-xs opacity-60 tabular-nums font-medium">00:00</span>
-                    <div class="flex-1 h-1 bg-white/10 rounded-full relative overflow-hidden cursor-pointer group">
-                        <input type="range" id="time-slider" class="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer" value="0" step="0.1">
-                        <div id="time-progress" class="absolute top-0 left-0 h-full bg-white/40 group-hover:bg-white/60 transition-colors" style="width: 0%"></div>
+                    <span id="current-time" class="text-xs opacity-60 tabular-nums font-medium w-9">00:00</span>
+                    <div class="flex-1 h-1 bg-white/10 rounded-full relative overflow-visible cursor-pointer group flex items-center">
+                        <input type="range" id="time-slider" class="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer" value="0" step="0.1" min="0" max="100">
+                        <div id="time-progress" class="absolute left-0 h-1 bg-white/40 group-hover:bg-white/60 transition-colors pointer-events-none rounded-full" style="width: 0%">
+                            <!-- Scrub thumb visual indicator -->
+                            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow translate-x-1/2 scale-0 group-hover:scale-100 transition-transform"></div>
+                        </div>
                     </div>
-                    <span id="duration" class="text-xs opacity-60 tabular-nums font-medium">00:00</span>
+                    <span id="duration" class="text-xs opacity-60 tabular-nums font-medium w-9 text-right">00:00</span>
+                    
+                    <!-- Volume Control -->
+                    <div class="flex items-center gap-2 pl-3 border-l border-white/10 ml-1">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/60">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                        <!-- Reusing .control-knob for styling consistency -->
+                        <input type="range" id="volume-slider" class="w-16 h-1 bg-white/20 rounded-lg cursor-pointer outline-none control-knob !m-0" min="0" max="3" step="0.01" value="1.5">
+                    </div>
                 </div>
             </div>
 
@@ -332,7 +318,6 @@
             </div>
         </div>
 
-        <!-- Band Controls -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
             <div class="glass-panel p-5 rounded-2xl group border-l-4" style="border-left-color: var(--lf-color);">
                 <div class="flex justify-between items-center mb-4">
@@ -417,7 +402,6 @@
     </div>
 
     <script>
-        // --- Web Audio and App Logic ---
         const startScreen = document.getElementById('start-screen');
         const mainApp = document.getElementById('main-app');
         const startButton = document.getElementById('start-button');
@@ -438,13 +422,16 @@
         const durationDisplay = document.getElementById('duration');
         const progressBarContainer = document.getElementById('progress-bar-container');
         const progressBar = document.getElementById('progress-bar');
+        const volumeSlider = document.getElementById('volume-slider');
 
         let audioContext, sourceNode, filters = {}, processedGainNode, bypassGainNode;
         let preEqAnalyser, postEqAnalyser, preRtaDataArray, postRtaDataArray;
-        let isPlaying = false, isBypassed = false, isInitialized = false, isRtaOn = false;
+        let clipGainNode, masterVolumeNode; // New nodes for gain staging
+        
+        let isPlaying = false, isBypassed = false, isInitialized = false, isRtaOn = false, isScrubbing = false;
         let selectedBand = null, hoveredBand = null, isDragging = false;
         let initialPinchDistance = null, initialQ = null;
-        let currentMediaKey = 0; // Tracks which clip or 'custom' file is active
+        let currentMediaKey = 0; 
 
         const bands = {
             lf: { type: 'peaking', color: 'var(--lf-color)', colorRgba: 'rgba(74, 222, 128, 0.2)' },
@@ -460,10 +447,17 @@
             hf: { freq: 10000, gain: 0, q: 1 }
         };
         
+        const BUCKET_URL = "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev";
+        
+        // Hardcoded list of exact video clips
         const challenges = [
-            { name: "Clip 1", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Edward%20Sounding%20Robotic.mp4" },
-            { name: "Clip 2", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4" },
-            { name: "Clip 3", url: "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev/Inconsistent%20Sound%20Across%20Sections%20-%20Made%20with%20Clipchamp.mp4" },
+            { name: "Clip 1", url: `${BUCKET_URL}/Clip%206.mp4`, gainOffset: 3.0 },
+            { name: "Clip 2", url: `${BUCKET_URL}/Clip%207.mp4`, gainOffset: 3.0 },
+            { name: "Clip 3", url: `${BUCKET_URL}/Clip%208.mp4`, gainOffset: 3.0 },
+            { name: "Clip 4", url: `${BUCKET_URL}/Clip%209.mp4`, gainOffset: 3.0 },
+            { name: "Clip 5", url: `${BUCKET_URL}/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4`, gainOffset: 3.0 },
+            { name: "Clip 6", url: `${BUCKET_URL}/Video%20Project%203.mp4`, gainOffset: 3.0 },
+            { name: "Clip 7", url: `${BUCKET_URL}/Clip%2010.mp4`, gainOffset: 3.0 }
         ];
 
         const MIN_FREQ = 30, MAX_FREQ = 20000, MIN_LOG_FREQ = Math.log(MIN_FREQ);
@@ -477,25 +471,36 @@
         startButton.addEventListener('click', () => {
             startScreen.classList.add('hidden');
             mainApp.classList.remove('hidden');
-            setTimeout(() => { if (!isInitialized) initAudio(); }, 0);
+            if (!isInitialized) initAudio();
         });
 
         function initAudio() {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             enablePlaybackControls(false, true);
             sourceNode = audioContext.createMediaElementSource(mediaPlayer);
+            
+            // Gain nodes
+            clipGainNode = audioContext.createGain(); 
             processedGainNode = audioContext.createGain();
             bypassGainNode = audioContext.createGain();
+            masterVolumeNode = audioContext.createGain();
+            
+            // Analysers
             preEqAnalyser = audioContext.createAnalyser();
             preEqAnalyser.fftSize = 2048;
             preEqAnalyser.smoothingTimeConstant = 0.92;
             preRtaDataArray = new Uint8Array(preEqAnalyser.frequencyBinCount);
+            
             postEqAnalyser = audioContext.createAnalyser();
             postEqAnalyser.fftSize = 2048;
             postEqAnalyser.smoothingTimeConstant = 0.92;
             postRtaDataArray = new Uint8Array(postEqAnalyser.frequencyBinCount);
-            let lastNode = sourceNode;
-            sourceNode.connect(preEqAnalyser);
+            
+            // Audio Routing: Source -> Clip Gain Matching -> Pre-Analyser -> EQ Filters -> Post-Analyser -> Master Volume
+            sourceNode.connect(clipGainNode);
+            clipGainNode.connect(preEqAnalyser);
+            
+            let lastNode = clipGainNode;
             Object.keys(bands).forEach(bandId => {
                 const filter = audioContext.createBiquadFilter();
                 filter.type = bands[bandId].type;
@@ -503,13 +508,28 @@
                 lastNode.connect(filter);
                 lastNode = filter;
             });
+            
             lastNode.connect(processedGainNode);
             processedGainNode.connect(postEqAnalyser);
-            postEqAnalyser.connect(audioContext.destination);
-            sourceNode.connect(bypassGainNode);
-            bypassGainNode.connect(audioContext.destination);
+            postEqAnalyser.connect(masterVolumeNode);
+            
+            // Bypass Route
+            clipGainNode.connect(bypassGainNode);
+            bypassGainNode.connect(masterVolumeNode);
+            
+            // Final Output
+            masterVolumeNode.connect(audioContext.destination);
+
+            // Initialize values with audio taper for master volume
             processedGainNode.gain.value = 1;
             bypassGainNode.gain.value = 0;
+            
+            const volVal = parseFloat(volumeSlider.value);
+            const volMax = parseFloat(volumeSlider.max);
+            masterVolumeNode.gain.value = Math.pow(volVal / volMax, 2) * volMax;
+            
+            clipGainNode.gain.value = challenges[currentMediaKey]?.gainOffset || 1.0;
+            
             setupChallenges();
             setControlsToDefaults();
             setupControls();
@@ -552,6 +572,7 @@
         }
         
         function setupChallenges() {
+            challengeSelect.innerHTML = ''; // Clear out the dropdown first
             challenges.forEach((c, index) => {
                 const opt = document.createElement('option');
                 opt.value = index; 
@@ -564,6 +585,12 @@
                 currentMediaKey = index;
                 if (isPlaying) mediaPlayer.pause();
                 mediaPlayer.src = challenges[index].url;
+                
+                // Match normalization levels
+                if(clipGainNode) {
+                    clipGainNode.gain.value = challenges[index].gainOffset || 1.0;
+                }
+                
                 mediaPlayer.load();
                 enablePlaybackControls(false, true);
             });
@@ -578,6 +605,16 @@
                 gS.addEventListener('dblclick', () => { gS.value = 0; updateFilterFromSlider(bid); });
                 qS.addEventListener('dblclick', () => { qS.value = 1; updateFilterFromSlider(bid); });
             });
+
+            // Set up volume master slider with Audio Taper (exponential curve)
+            volumeSlider.addEventListener('input', e => {
+                if(masterVolumeNode) {
+                    const val = parseFloat(e.target.value);
+                    const max = parseFloat(e.target.max);
+                    // Squaring the normalized value creates a smooth, natural-sounding volume curve
+                    masterVolumeNode.gain.value = Math.pow(val / max, 2) * max;
+                }
+            });
         }
 
         function setupFileUpload() {
@@ -587,6 +624,9 @@
                 currentMediaKey = 'custom';
                 if (isPlaying) mediaPlayer.pause();
                 mediaPlayer.src = URL.createObjectURL(file);
+                
+                if(clipGainNode) clipGainNode.gain.value = 1.0; // Reset offset for external
+
                 mediaPlayer.load();
                 enablePlaybackControls(false, true);
             });
@@ -598,19 +638,15 @@
             videoContainer.addEventListener('click', () => playPauseButton.click());
             
             mediaPlayer.addEventListener('play', () => { 
-                // Hide overlay normally, but allow it to show on group hover
                 playIconOverlay.classList.remove('opacity-100', 'bg-black/40', 'backdrop-blur-[2px]');
                 playIconOverlay.classList.add('opacity-0', 'group-hover:opacity-100');
-                
                 isPlaying = true;
                 updatePlayPauseIcons();
             });
             
             mediaPlayer.addEventListener('pause', () => { 
-                // Always show overlay when paused
                 playIconOverlay.classList.remove('opacity-0', 'group-hover:opacity-100');
                 playIconOverlay.classList.add('opacity-100', 'bg-black/40', 'backdrop-blur-[2px]');
-                
                 isPlaying = false;
                 updatePlayPauseIcons();
             });
@@ -623,13 +659,29 @@
                 }
             });
             mediaPlayer.addEventListener('loadedmetadata', () => { durationDisplay.textContent = formatTime(mediaPlayer.duration); });
-            mediaPlayer.addEventListener('timeupdate', () => { 
-                const progress = (mediaPlayer.currentTime / mediaPlayer.duration) * 100;
-                timeProgress.style.width = `${progress}%`;
-                currentTimeDisplay.textContent = formatTime(mediaPlayer.currentTime); 
-            });
+            
+            // Smooth Scrubbing Timeline Logic
+            timeSlider.addEventListener('mousedown', () => isScrubbing = true);
+            timeSlider.addEventListener('touchstart', () => isScrubbing = true);
+            timeSlider.addEventListener('mouseup', () => isScrubbing = false);
+            timeSlider.addEventListener('touchend', () => isScrubbing = false);
+
             timeSlider.addEventListener('input', () => {
-                mediaPlayer.currentTime = (timeSlider.value / 100) * mediaPlayer.duration;
+                if(mediaPlayer.duration) {
+                    const newTime = (timeSlider.value / 100) * mediaPlayer.duration;
+                    mediaPlayer.currentTime = newTime;
+                    timeProgress.style.width = `${timeSlider.value}%`;
+                    currentTimeDisplay.textContent = formatTime(newTime);
+                }
+            });
+
+            mediaPlayer.addEventListener('timeupdate', () => { 
+                if(!isScrubbing && mediaPlayer.duration) {
+                    const progress = (mediaPlayer.currentTime / mediaPlayer.duration) * 100;
+                    timeProgress.style.width = `${progress}%`;
+                    timeSlider.value = progress;
+                }
+                currentTimeDisplay.textContent = formatTime(mediaPlayer.currentTime); 
             });
         }
 
@@ -708,7 +760,6 @@
                 startPos = { x, y };
                 const now = Date.now();
                 
-                // If clicked twice quickly on the same band, flag it as a double-click
                 if (bid && bid === lastDown.band && (now - lastDown.time) < 300) {
                     isDoubleDown = true;
                     selectedBand = bid;
@@ -724,7 +775,6 @@
                 hoveredBand = getClosest(x, y);
                 if (!isDragging || !selectedBand) return;
                 
-                // Add a small 3px deadzone to differentiate accidental wiggles from intentional dragging
                 if (Math.hypot(x - startPos.x, y - startPos.y) > 3) {
                     hasMoved = true;
                 }
@@ -737,7 +787,6 @@
             };
 
             const handleUp = () => {
-                // If it was a double click AND the user didn't drag it, treat as a reset
                 if (isDoubleDown && !hasMoved && selectedBand) {
                     document.getElementById(`gain-${selectedBand}`).value = initialDefaults[selectedBand].gain;
                     updateFilterFromSlider(selectedBand);
@@ -752,19 +801,16 @@
             canvas.addEventListener('mouseleave', () => { hoveredBand = null; handleUp(); });
             canvas.addEventListener('mouseup', handleUp);
             
-            // Handles laptop trackpad pinch (and standard scroll)
             canvas.addEventListener('wheel', e => {
                 const targetBand = isDragging ? selectedBand : hoveredBand;
                 if (!targetBand) return;
                 e.preventDefault(); 
                 
-                hasMoved = true; // Register the pinch so releasing the double-click doesn't reset gain to 0
+                hasMoved = true; 
                 
                 const qS = document.getElementById(`q-${targetBand}`);
                 let cQ = parseFloat(qS.value);
                 
-                // e.ctrlKey is commonly true for trackpad pinch events on modern browsers.
-                // deltaY logic: Pinching Out generally yields negative deltaY, Pinching In yields positive.
                 let sensitivity = e.ctrlKey ? 0.05 : 0.01;
                 cQ *= Math.pow(1.1, e.deltaY * sensitivity);
                 
@@ -772,7 +818,6 @@
                 updateFilterFromSlider(targetBand);
             }, { passive: false });
             
-            // Specific Mac Safari Trackpad Gestures (for comprehensive support)
             let initialGestureQ = null;
             canvas.addEventListener('gesturestart', e => {
                 e.preventDefault();
@@ -785,9 +830,8 @@
                 e.preventDefault();
                 const targetBand = isDragging ? selectedBand : hoveredBand;
                 if (targetBand && initialGestureQ !== null) {
-                    hasMoved = true; // Register the pinch so releasing the double-click doesn't reset gain to 0
+                    hasMoved = true;
                     const qS = document.getElementById(`q-${targetBand}`);
-                    // scale > 1 (pinch out/wider) -> lower Q
                     let newQ = initialGestureQ / e.scale;
                     qS.value = Math.max(0.1, Math.min(10, newQ));
                     updateFilterFromSlider(targetBand);
@@ -798,7 +842,6 @@
                 initialGestureQ = null;
             });
 
-            // Handles mobile touchscreen interactions
             canvas.addEventListener('touchstart', e => { 
                 e.preventDefault(); 
                 const r = canvas.getBoundingClientRect(); 
@@ -808,7 +851,7 @@
             canvas.addEventListener('touchmove', e => {
                 e.preventDefault();
                 if (e.touches.length === 2 && selectedBand) {
-                    hasMoved = true; // Register the pinch so releasing the double-click doesn't reset gain to 0
+                    hasMoved = true; 
                     const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                     if (initialPinchDistance === null) { initialPinchDistance = dist; initialQ = parseFloat(document.getElementById(`q-${selectedBand}`).value); }
                     document.getElementById(`q-${selectedBand}`).value = Math.max(0.1, Math.min(10, initialQ / (dist / initialPinchDistance)));
@@ -831,7 +874,6 @@
             const w = canvas.clientWidth, h = canvas.clientHeight, cy = gainToY(0, h);
             ctx.clearRect(0, 0, w, h);
             
-            // Grid
             const gC = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
             ctx.strokeStyle = gC;
             ctx.lineWidth = 1;
@@ -865,14 +907,12 @@
             ctx.beginPath();
             ctx.strokeStyle = isBypassed ? 'rgba(255,255,255,0.1)' : getComputedStyle(document.documentElement).getPropertyValue('--curve-color').trim();
             ctx.lineWidth = 4;
-            /* Glow restored here */
             ctx.shadowBlur = isBypassed ? 0 : 15;
             ctx.shadowColor = ctx.strokeStyle;
             for (let i = 0; i < w; i++) { const y = gainToY(20 * Math.log10(cR[i]), h); if (i === 0) ctx.moveTo(i, y); else ctx.lineTo(i, y); }
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // Control points
             Object.keys(bands).forEach(bid => {
                 const f = filters[bid], x = freqToX(f.frequency.value, w), y = gainToY(f.gain.value, h);
                 const bCol = getComputedStyle(document.documentElement).getPropertyValue(bands[bid].color.substring(4, bands[bid].color.length-1)).trim();
