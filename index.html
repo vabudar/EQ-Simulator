@@ -583,7 +583,15 @@
             challengeSelect.addEventListener('change', e => {
                 const index = parseInt(e.target.value);
                 currentMediaKey = index;
-                if (isPlaying) mediaPlayer.pause();
+                
+                mediaPlayer.pause();
+                
+                // Force UI to show play icon/overlay for the newly loaded clip immediately
+                isPlaying = false;
+                playIconOverlay.classList.remove('opacity-0', 'group-hover:opacity-100');
+                playIconOverlay.classList.add('opacity-100', 'bg-black/40', 'backdrop-blur-[2px]');
+                updatePlayPauseIcons();
+                
                 mediaPlayer.src = challenges[index].url;
                 
                 // Match normalization levels
@@ -622,7 +630,15 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 currentMediaKey = 'custom';
-                if (isPlaying) mediaPlayer.pause();
+                
+                mediaPlayer.pause();
+                
+                // Force UI to show play icon/overlay for the newly loaded clip immediately
+                isPlaying = false;
+                playIconOverlay.classList.remove('opacity-0', 'group-hover:opacity-100');
+                playIconOverlay.classList.add('opacity-100', 'bg-black/40', 'backdrop-blur-[2px]');
+                updatePlayPauseIcons();
+                
                 mediaPlayer.src = URL.createObjectURL(file);
                 
                 if(clipGainNode) clipGainNode.gain.value = 1.0; // Reset offset for external
