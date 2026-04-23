@@ -330,7 +330,7 @@
                         <span class="text-[9px] uppercase font-bold opacity-30">Gain</span>
                         <span id="gain-lf-val" class="font-mono text-[10px] text-white/70">0.0 dB</span>
                     </div>
-                    <input id="gain-lf" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
+                    <input id="gain-lf" type="range" min="-24" max="24" value="0" step="0.1" class="control-knob">
                     <div class="flex justify-between items-center">
                         <span class="text-[9px] uppercase font-bold opacity-30">Width</span>
                         <span id="q-lf-val" class="font-mono text-[10px] text-white/70">1.00</span>
@@ -350,7 +350,7 @@
                         <span class="text-[9px] uppercase font-bold opacity-30">Gain</span>
                         <span id="gain-lm-val" class="font-mono text-[10px] text-white/70">0.0 dB</span>
                     </div>
-                    <input id="gain-lm" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
+                    <input id="gain-lm" type="range" min="-24" max="24" value="0" step="0.1" class="control-knob">
                     <div class="flex justify-between items-center">
                         <span class="text-[9px] uppercase font-bold opacity-30">Width</span>
                         <span id="q-lm-val" class="font-mono text-[10px] text-white/70">1.00</span>
@@ -370,7 +370,7 @@
                         <span class="text-[9px] uppercase font-bold opacity-30">Gain</span>
                         <span id="gain-hm-val" class="font-mono text-[10px] text-white/70">0.0 dB</span>
                     </div>
-                    <input id="gain-hm" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
+                    <input id="gain-hm" type="range" min="-24" max="24" value="0" step="0.1" class="control-knob">
                     <div class="flex justify-between items-center">
                         <span class="text-[9px] uppercase font-bold opacity-30">Width</span>
                         <span id="q-hm-val" class="font-mono text-[10px] text-white/70">1.00</span>
@@ -390,7 +390,7 @@
                         <span class="text-[9px] uppercase font-bold opacity-30">Gain</span>
                         <span id="gain-hf-val" class="font-mono text-[10px] text-white/70">0.0 dB</span>
                     </div>
-                    <input id="gain-hf" type="range" min="-20" max="20" value="0" step="0.1" class="control-knob">
+                    <input id="gain-hf" type="range" min="-24" max="24" value="0" step="0.1" class="control-knob">
                     <div class="flex justify-between items-center">
                         <span class="text-[9px] uppercase font-bold opacity-30">Width</span>
                         <span id="q-hf-val" class="font-mono text-[10px] text-white/70">1.00</span>
@@ -426,7 +426,7 @@
 
         let audioContext, sourceNode, filters = {}, processedGainNode, bypassGainNode;
         let preEqAnalyser, postEqAnalyser, preRtaDataArray, postRtaDataArray;
-        let clipGainNode, masterVolumeNode; // New nodes for gain staging
+        let clipGainNode, masterVolumeNode; 
         
         let isPlaying = false, isBypassed = false, isInitialized = false, isRtaOn = false, isScrubbing = false;
         let selectedBand = null, hoveredBand = null, isDragging = false;
@@ -449,24 +449,26 @@
         
         const BUCKET_URL = "https://pub-0c98e8139d9a4bcfb12ee3e48c0ad0f9.r2.dev";
         
-        // Hardcoded list of exact video clips
+        // Lowered gainOffset from 3.0 to 1.0 to restore raw dynamic range and prevent hard-clipping
         const challenges = [
-            { name: "Clip 1", url: `${BUCKET_URL}/Clip%206.mp4`, gainOffset: 3.0 },
-            { name: "Clip 2", url: `${BUCKET_URL}/Clip%207.mp4`, gainOffset: 3.0 },
-            { name: "Clip 3", url: `${BUCKET_URL}/Clip%208.mp4`, gainOffset: 3.0 },
-            { name: "Clip 4", url: `${BUCKET_URL}/Clip%205.mp4`, gainOffset: 3.0 },
-            { name: "Clip 5", url: `${BUCKET_URL}/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4`, gainOffset: 3.0 },
-            { name: "Clip 6", url: `${BUCKET_URL}/Video%20Project%203.mp4`, gainOffset: 3.0 },
-            { name: "Clip 7", url: `${BUCKET_URL}/Clip%2010.mp4`, gainOffset: 3.0 }
+            { name: "Clip 1", url: `${BUCKET_URL}/Clip%206.mp4`, gainOffset: 1.0 },
+            { name: "Clip 2", url: `${BUCKET_URL}/Clip%207.mp4`, gainOffset: 1.0 },
+            { name: "Clip 3", url: `${BUCKET_URL}/Clip%208.mp4`, gainOffset: 1.0 },
+            { name: "Clip 4", url: `${BUCKET_URL}/Clip%205.mp4`, gainOffset: 1.0 },
+            { name: "Clip 5", url: `${BUCKET_URL}/Good%20Example%20of%20Speaker%20Balance-%20Made%20with%20Clipchamp.mp4`, gainOffset: 1.0 },
+            { name: "Clip 6", url: `${BUCKET_URL}/Video%20Project%203.mp4`, gainOffset: 1.0 },
+            { name: "Clip 7", url: `${BUCKET_URL}/Clip%2010.mp4`, gainOffset: 1.0 }
         ];
 
+        // Expanded Gain Range for functional and visual scope
         const MIN_FREQ = 30, MAX_FREQ = 20000, MIN_LOG_FREQ = Math.log(MIN_FREQ);
-        const MAX_LOG_FREQ = Math.log(MAX_FREQ), LOG_RANGE = MAX_LOG_FREQ - MIN_LOG_FREQ, GAIN_RANGE = 20;
+        const MAX_LOG_FREQ = Math.log(MAX_FREQ), LOG_RANGE = MAX_LOG_FREQ - MIN_LOG_FREQ, GAIN_RANGE = 24; 
 
+        // Adjusted multiplier for 48dB total range (±24dB)
         const freqToX = (f, w) => w * (Math.log(f) - MIN_LOG_FREQ) / LOG_RANGE;
         const xToFreq = (x, w) => Math.exp(MIN_LOG_FREQ + (x / w) * LOG_RANGE);
-        const gainToY = (g, h) => h * (0.5 - g / 40);
-        const yToGain = (y, h) => (0.5 - y / h) * 40;
+        const gainToY = (g, h) => h * (0.5 - g / 48); 
+        const yToGain = (y, h) => (0.5 - y / h) * 48; 
 
         startButton.addEventListener('click', () => {
             startScreen.classList.add('hidden');
@@ -485,15 +487,19 @@
             bypassGainNode = audioContext.createGain();
             masterVolumeNode = audioContext.createGain();
             
-            // Analysers
+            // Analysers configured for better visual dynamic range coverage
             preEqAnalyser = audioContext.createAnalyser();
             preEqAnalyser.fftSize = 2048;
             preEqAnalyser.smoothingTimeConstant = 0.92;
+            preEqAnalyser.minDecibels = -90; 
+            preEqAnalyser.maxDecibels = -10; 
             preRtaDataArray = new Uint8Array(preEqAnalyser.frequencyBinCount);
             
             postEqAnalyser = audioContext.createAnalyser();
             postEqAnalyser.fftSize = 2048;
             postEqAnalyser.smoothingTimeConstant = 0.92;
+            postEqAnalyser.minDecibels = -90;
+            postEqAnalyser.maxDecibels = -10;
             postRtaDataArray = new Uint8Array(postEqAnalyser.frequencyBinCount);
             
             // Audio Routing: Source -> Clip Gain Matching -> Pre-Analyser -> EQ Filters -> Post-Analyser -> Master Volume
@@ -572,7 +578,7 @@
         }
         
         function setupChallenges() {
-            challengeSelect.innerHTML = ''; // Clear out the dropdown first
+            challengeSelect.innerHTML = ''; 
             challenges.forEach((c, index) => {
                 const opt = document.createElement('option');
                 opt.value = index; 
@@ -897,7 +903,8 @@
                 const x = freqToX(f, w); ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
                 ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '10px "Gill Sans"'; ctx.fillText(`${f < 1000 ? f : (f/1000)+'k'}`, x + 4, h - 10);
             });
-            [-12, -6, 0, 6, 12].forEach(g => {
+            // Updated grid to support wider gain range visually 
+            [-18, -12, -6, 0, 6, 12, 18].forEach(g => {
                 const y = gainToY(g, h); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
                 if (g !== 0) ctx.fillText(`${g}dB`, 10, y - 5);
             });
